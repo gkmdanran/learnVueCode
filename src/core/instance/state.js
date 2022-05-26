@@ -309,14 +309,14 @@ function createWatcher (
   handler: any,
   options?: Object
 ) {
-  if (isPlainObject(handler)) {
+  if (isPlainObject(handler)) {   //如果是一个对象，则会提取对象中handler的值做为cb回调函数，其余的则是options选项
     options = handler
     handler = handler.handler
   }
-  if (typeof handler === 'string') {
+  if (typeof handler === 'string') {   //如果handler是一个字符串，则会在实例上找对应的方法作为cb回调函数。
     handler = vm[handler]
   }
-  return vm.$watch(expOrFn, handler, options)
+  return vm.$watch(expOrFn, handler, options)  //通过$watch创建用户watcher。
 }
 
 export function stateMixin (Vue: Class<Component>) {
@@ -327,6 +327,8 @@ export function stateMixin (Vue: Class<Component>) {
   dataDef.get = function () { return this._data }
   const propsDef = {}
   propsDef.get = function () { return this._props }
+
+  //$data和$props只读，不能设置。
   if (process.env.NODE_ENV !== 'production') {
     dataDef.set = function () {
       warn(
@@ -339,31 +341,36 @@ export function stateMixin (Vue: Class<Component>) {
       warn(`$props is readonly.`, this)
     }
   }
-  Object.defineProperty(Vue.prototype, '$data', dataDef)
-  Object.defineProperty(Vue.prototype, '$props', propsDef)
+  Object.defineProperty(Vue.prototype, '$data', dataDef) //this.$data实际访问的是this._data，并且不能设置$data。
+  Object.defineProperty(Vue.prototype, '$props', propsDef)//this.$props实际访问的是this._props，并且不能设置$props。
 
   Vue.prototype.$set = set
   Vue.prototype.$delete = del
 
+
+  //1.用户可以通过以下方式手动调用$watch；
+  //   this.$watch('obj.b.c', function (newVal, oldVal) {}) 
+  //或 this.$watch(()=>this.obj,function (newVal, oldVal) {})
+  //2.对于定义在 watch:{ } 中的每一个watch也会调用$watch方法来创建watcher。
   Vue.prototype.$watch = function (
-    expOrFn: string | Function,
+    expOrFn: string | Function,  
     cb: any,
     options?: Object
   ): Function {
     const vm: Component = this
-    if (isPlainObject(cb)) {
+    if (isPlainObject(cb)) {   //如果cb传入的是一个对象，则会通过createWatcher去处理。
       return createWatcher(vm, expOrFn, cb, options)
     }
     options = options || {}
-    options.user = true
+    options.user = true   //用户watcher标记
     const watcher = new Watcher(vm, expOrFn, cb, options)
-    if (options.immediate) {
+    if (options.immediate) {   //传入immediate为true时，立即执行watcher的回调函数。
       const info = `callback for immediate watcher "${watcher.expression}"`
-      pushTarget()
-      invokeWithErrorHandling(cb, vm, [watcher.value], vm, info)
-      popTarget()
+      pushTarget() //Dep.target=这个watcher
+      invokeWithErrorHandling(cb, vm, [watcher.value], vm, info)  //通过try catch包裹执行cb，用来抛出异常信息。
+      popTarget()  //这个watcher出栈，Dep.target=前一个watcher
     }
-    return function unwatchFn () {
+    return function unwatchFn () {   //返回一个函数，用来取消watcher监听。
       watcher.teardown()
     }
   }
