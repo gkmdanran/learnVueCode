@@ -56,7 +56,7 @@ export function initLifecycle (vm: Component) {
 }
 
 export function lifecycleMixin (Vue: Class<Component>) {
-  Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
+  Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {  //markGKM
     const vm: Component = this
     const prevEl = vm.$el
     const prevVnode = vm._vnode
@@ -90,29 +90,29 @@ export function lifecycleMixin (Vue: Class<Component>) {
   Vue.prototype.$forceUpdate = function () {
     const vm: Component = this
     if (vm._watcher) {
-      vm._watcher.update()
+      vm._watcher.update()   //_watcher表示渲染watcher，调用update更新组件视图。
     }
   }
 
   Vue.prototype.$destroy = function () {
     const vm: Component = this
-    if (vm._isBeingDestroyed) {
+    if (vm._isBeingDestroyed) {    //如果组件已经在销毁了，则return
       return
     }
-    callHook(vm, 'beforeDestroy')
-    vm._isBeingDestroyed = true
+    callHook(vm, 'beforeDestroy')  //调用beforeDestroy生命周期函数
+    vm._isBeingDestroyed = true    //开始销毁
     // remove self from parent
-    const parent = vm.$parent
-    if (parent && !parent._isBeingDestroyed && !vm.$options.abstract) {
+    const parent = vm.$parent      //获取父组件
+    if (parent && !parent._isBeingDestroyed && !vm.$options.abstract) {  //如果父组件不在销毁中，并且不是抽象组件则将自己在父组件的chidlren中移除
       remove(parent.$children, vm)
     }
     // teardown watchers
     if (vm._watcher) {
-      vm._watcher.teardown()
+      vm._watcher.teardown()   //移除渲染wathcer监听
     }
     let i = vm._watchers.length
     while (i--) {
-      vm._watchers[i].teardown()
+      vm._watchers[i].teardown()  //移除实例上所有watcher的监听
     }
     // remove reference from data ob
     // frozen object may not have observer.
@@ -120,20 +120,20 @@ export function lifecycleMixin (Vue: Class<Component>) {
       vm._data.__ob__.vmCount--
     }
     // call the last hook...
-    vm._isDestroyed = true
+    vm._isDestroyed = true     //已经销毁
     // invoke destroy hooks on current rendered tree
-    vm.__patch__(vm._vnode, null)
+    vm.__patch__(vm._vnode, null)   //patch传入的vnode为null
     // fire destroyed hook
-    callHook(vm, 'destroyed')
+    callHook(vm, 'destroyed')    //调用destroyed生命周期函数
     // turn off all instance listeners.
-    vm.$off()
+    vm.$off()                   //移除实例上所有事件vm._events={}
     // remove __vue__ reference
     if (vm.$el) {
       vm.$el.__vue__ = null
     }
     // release circular reference (#6759)
     if (vm.$vnode) {
-      vm.$vnode.parent = null
+      vm.$vnode.parent = null      //markGKM
     }
   }
 }
