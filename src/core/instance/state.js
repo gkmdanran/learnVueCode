@@ -47,18 +47,18 @@ export function proxy (target: Object, sourceKey: string, key: string) {
 }
 
 export function initState (vm: Component) {
-  vm._watchers = []
+  vm._watchers = []  //watcher存在这里
   const opts = vm.$options
-  if (opts.props) initProps(vm, opts.props)
-  if (opts.methods) initMethods(vm, opts.methods)
+  if (opts.props) initProps(vm, opts.props)   //处理props
+  if (opts.methods) initMethods(vm, opts.methods) //处理methods
   if (opts.data) {
-    initData(vm)
+    initData(vm)   //处理data
   } else {
     observe(vm._data = {}, true /* asRootData */)
   }
-  if (opts.computed) initComputed(vm, opts.computed)
-  if (opts.watch && opts.watch !== nativeWatch) {
-    initWatch(vm, opts.watch)
+  if (opts.computed) initComputed(vm, opts.computed) //处理computed
+  if (opts.watch && opts.watch !== nativeWatch) { //防止和Firefox浏览器下的watch冲突
+    initWatch(vm, opts.watch)  //处理watch
   }
 }
 
@@ -112,6 +112,7 @@ function initProps (vm: Component, propsOptions: Object) {
 
 function initData (vm: Component) {
   let data = vm.$options.data
+  //data是函数则调用函数获得data对象,并添加到vm._data上
   data = vm._data = typeof data === 'function'
     ? getData(data, vm)
     : data || {}
@@ -131,6 +132,7 @@ function initData (vm: Component) {
   while (i--) {
     const key = keys[i]
     if (process.env.NODE_ENV !== 'production') {
+      //校验data上的key是否与methods中的key重复
       if (methods && hasOwn(methods, key)) {
         warn(
           `Method "${key}" has already been defined as a data property.`,
@@ -138,6 +140,7 @@ function initData (vm: Component) {
         )
       }
     }
+    //校验data上的key是否与props中的key重复
     if (props && hasOwn(props, key)) {
       process.env.NODE_ENV !== 'production' && warn(
         `The data property "${key}" is already declared as a prop. ` +
@@ -145,10 +148,12 @@ function initData (vm: Component) {
         vm
       )
     } else if (!isReserved(key)) {
+      //代理_data，通过this.xxx时获取的实际是this._data.xxx的值
       proxy(vm, `_data`, key)
     }
   }
   // observe data
+  //侦测data，使data响应式
   observe(data, true /* asRootData */)
 }
 
