@@ -27,14 +27,16 @@ export function initMixin (Vue: Class<Component>) {
     }
 
     // a flag to avoid this being observed
-    vm._isVue = true
+    vm._isVue = true   //实例上添加_isVue标记防止被响应式处理
     // merge options
-    if (options && options._isComponent) {
+    if (options && options._isComponent) {   //如果是组件调用的_init方法会走这里
       // optimize internal component instantiation
       // since dynamic options merging is pretty slow, and none of the
       // internal component options needs special treatment.
       initInternalComponent(vm, options)
     } else {
+      //Vue根走这里
+      //将用户new Vue()时传入的options和Vue构造函数上的options合并，然后添加到实例的$options上
       vm.$options = mergeOptions(
         resolveConstructorOptions(vm.constructor),
         options || {},
@@ -49,14 +51,14 @@ export function initMixin (Vue: Class<Component>) {
     }
     // expose real self
     vm._self = vm
-    initLifecycle(vm)
-    initEvents(vm)
-    initRender(vm)
-    callHook(vm, 'beforeCreate')
-    initInjections(vm) // resolve injections before data/props
-    initState(vm)
-    initProvide(vm) // resolve provide after data/props
-    callHook(vm, 'created')
+    initLifecycle(vm)//初始化$parent、$root、$children、$refs
+    initEvents(vm)   //初始化事件vm._events={},如果是组件：更新组件的事件updateComponentListeners
+    initRender(vm)   //markGKM
+    callHook(vm, 'beforeCreate')  //调用beforeCreate生命周期函数
+    initInjections(vm) // 处理inject
+    initState(vm)//初始化props、methods、data、computed、watch
+    initProvide(vm) // 处理provide
+    callHook(vm, 'created') //调用created生命周期函数
 
     /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
@@ -64,7 +66,7 @@ export function initMixin (Vue: Class<Component>) {
       mark(endTag)
       measure(`vue ${vm._name} init`, startTag, endTag)
     }
-
+    //如果用户在options中定义了el，则调用$mount挂载
     if (vm.$options.el) {
       vm.$mount(vm.$options.el)
     }
@@ -92,6 +94,7 @@ export function initInternalComponent (vm: Component, options: InternalComponent
 
 export function resolveConstructorOptions (Ctor: Class<Component>) {
   let options = Ctor.options
+  //根不存在super，则直接获取构造函数的options返回
   if (Ctor.super) {
     const superOptions = resolveConstructorOptions(Ctor.super)
     const cachedSuperOptions = Ctor.superOptions
