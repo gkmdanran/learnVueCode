@@ -7,15 +7,15 @@ import { isIE, isIOS, isNative } from './env'
 
 export let isUsingMicroTask = false
 
-const callbacks = []
-let pending = false
+const callbacks = []   //nextTick包裹的回调函数存放在此
+let pending = false    //pending初始值为false
 
 function flushCallbacks () {
-  pending = false
-  const copies = callbacks.slice(0)
-  callbacks.length = 0
+  pending = false   //pending重新置为false
+  const copies = callbacks.slice(0)  //拷贝一份
+  callbacks.length = 0  //清空callbacks数组
   for (let i = 0; i < copies.length; i++) {
-    copies[i]()
+    copies[i]()      //循环拷贝的callbacks数组，调用被异常捕获包裹后的每一个回调函数。
   }
 }
 
@@ -39,7 +39,7 @@ let timerFunc
 // completely stops working after triggering a few times... so, if native
 // Promise is available, we will use it:
 /* istanbul ignore next, $flow-disable-line */
-if (typeof Promise !== 'undefined' && isNative(Promise)) {
+if (typeof Promise !== 'undefined' && isNative(Promise)) {    //优先考虑微任务promise
   const p = Promise.resolve()
   timerFunc = () => {
     p.then(flushCallbacks)
@@ -51,7 +51,7 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
     if (isIOS) setTimeout(noop)
   }
   isUsingMicroTask = true
-} else if (!isIE && typeof MutationObserver !== 'undefined' && (
+} else if (!isIE && typeof MutationObserver !== 'undefined' && (    //markGKM
   isNative(MutationObserver) ||
   // PhantomJS and iOS 7.x
   MutationObserver.toString() === '[object MutationObserverConstructor]'
@@ -70,14 +70,14 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
     textNode.data = String(counter)
   }
   isUsingMicroTask = true
-} else if (typeof setImmediate !== 'undefined' && isNative(setImmediate)) {
+} else if (typeof setImmediate !== 'undefined' && isNative(setImmediate)) {   //然后是setImmediate
   // Fallback to setImmediate.
   // Technically it leverages the (macro) task queue,
   // but it is still a better choice than setTimeout.
   timerFunc = () => {
     setImmediate(flushCallbacks)
   }
-} else {
+} else {     //最后setTimeout兜底，异步调用flushCallbacks
   // Fallback to setTimeout.
   timerFunc = () => {
     setTimeout(flushCallbacks, 0)
@@ -86,6 +86,7 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
 
 export function nextTick (cb?: Function, ctx?: Object) {
   let _resolve
+  //将回调函数进项包裹，捕获异常，然后存放到callbacks数组中。
   callbacks.push(() => {
     if (cb) {
       try {
@@ -97,11 +98,14 @@ export function nextTick (cb?: Function, ctx?: Object) {
       _resolve(ctx)
     }
   })
+  //当前状态不是pending时才会调用timerFunc函数，并且再次进入pending状态
   if (!pending) {
     pending = true
     timerFunc()
   }
   // $flow-disable-line
+  //如果当前环境支持Promise,那么nextTick的返回值是一个Promise
+  //可以这么使用this.$nextTick().then((vm) => { vm.$refs['xxx'].xxx() });
   if (!cb && typeof Promise !== 'undefined') {
     return new Promise(resolve => {
       _resolve = resolve
