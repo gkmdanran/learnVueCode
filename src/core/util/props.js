@@ -25,30 +25,31 @@ export function validateProp (
   vm?: Component
 ): any {
   const prop = propOptions[key]
-  const absent = !hasOwn(propsData, key)
-  let value = propsData[key]
+  const absent = !hasOwn(propsData, key)  //如果props有在组件上进行传递，那么对应的absent就是false
+  let value = propsData[key]  //组件上传递给props的value
   // boolean casting
-  const booleanIndex = getTypeIndex(Boolean, prop.type)
+  const booleanIndex = getTypeIndex(Boolean, prop.type)  //如果props对应的type是Boolean，就是>=0,否则为-1
   if (booleanIndex > -1) {
-    if (absent && !hasOwn(prop, 'default')) {
+    if (absent && !hasOwn(prop, 'default')) {  //如果Boolean类型的props没有在组件上进行传递并且也没设置default默认值，那么props的值就是false
       value = false
-    } else if (value === '' || value === hyphenate(key)) {
+    } else if (value === '' || value === hyphenate(key)) {   //如果props在组件上传递的值是'',类似这种 <cmp disabled=""/>或<cmp disabled/>
       // only cast empty string / same name to boolean if
       // boolean has higher priority
       const stringIndex = getTypeIndex(String, prop.type)
-      if (stringIndex < 0 || booleanIndex < stringIndex) {
+      if (stringIndex < 0 || booleanIndex < stringIndex) {   //如果类型是Boolean，或者数组中Boolean在String前面：[Boolean,String] 那么上述情形props的值就是true
         value = true
       }
     }
   }
   // check default value
+  //如果props没有在组件上进行传递并且不是Boolean类型，就会来到这里，通过default去获取默认值
   if (value === undefined) {
     value = getPropDefaultValue(vm, prop, key)
     // since the default value is a fresh copy,
     // make sure to observe it.
     const prevShouldObserve = shouldObserve
     toggleObserving(true)
-    observe(value)
+    observe(value)   //侦测value值，使其响应式
     toggleObserving(prevShouldObserve)
   }
   if (
@@ -66,6 +67,7 @@ export function validateProp (
  */
 function getPropDefaultValue (vm: ?Component, prop: PropOptions, key: string): any {
   // no default, return undefined
+  //没有设置default，值就是undefined
   if (!hasOwn(prop, 'default')) {
     return undefined
   }
@@ -89,6 +91,7 @@ function getPropDefaultValue (vm: ?Component, prop: PropOptions, key: string): a
   }
   // call factory function for non-Function types
   // a value is Function if its prototype is function even across different execution context
+  //default是函数则调用函数获取值
   return typeof def === 'function' && getType(prop.type) !== 'Function'
     ? def.call(vm)
     : def

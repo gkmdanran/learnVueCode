@@ -12,12 +12,23 @@
     </div>
     <script src="../dist/vue.js"></script>
     <script>
+        Vue.component('cmp', {
+            props: {
+                name: {
+                    type: String,
+                    default: 'defaultName'
+                }
+            },
+            template: `<div>{{name}}</div>`
+        })
         new Vue({
             el: '#app',
             data: {
                 msg: 'hello vue'
-            }
+            },
+            template: `<cmp name="test"/>`
         })
+
     </script>
 </body>
 

@@ -16,6 +16,7 @@ export function initMixin (Vue: Class<Component>) {
   Vue.prototype._init = function (options?: Object) {
     const vm: Component = this
     // a uid
+    // 每个 vue 实例都有一个 _uid，并且是依次递增的
     vm._uid = uid++
 
     let startTag, endTag
