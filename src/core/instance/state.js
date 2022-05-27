@@ -182,12 +182,13 @@ const computedWatcherOptions = { lazy: true }
 
 function initComputed (vm: Component, computed: Object) {
   // $flow-disable-line
-  const watchers = vm._computedWatchers = Object.create(null)
+  const watchers = vm._computedWatchers = Object.create(null)//存放由computed创建的lazyWatcher
   // computed properties are just getters during SSR
   const isSSR = isServerRendering()
 
   for (const key in computed) {
     const userDef = computed[key]
+    //如果用户定义的computed是一个函数那就直接当作getter，否则就是对象上的get当作getter
     const getter = typeof userDef === 'function' ? userDef : userDef.get
     if (process.env.NODE_ENV !== 'production' && getter == null) {
       warn(
@@ -198,6 +199,7 @@ function initComputed (vm: Component, computed: Object) {
 
     if (!isSSR) {
       // create internal watcher for the computed property.
+      //创建一个lazyWatcher,传递的options:{lazy:true}，添加到vm._computedWatchers上
       watchers[key] = new Watcher(
         vm,
         getter || noop,
@@ -210,8 +212,10 @@ function initComputed (vm: Component, computed: Object) {
     // component prototype. We only need to define computed properties defined
     // at instantiation here.
     if (!(key in vm)) {
+      //将computed处理后添加到Vue实例
       defineComputed(vm, key, userDef)
     } else if (process.env.NODE_ENV !== 'production') {
+      //校验重复
       if (key in vm.$data) {
         warn(`The computed property "${key}" is already defined in data.`, vm)
       } else if (vm.$options.props && key in vm.$options.props) {
@@ -230,6 +234,7 @@ export function defineComputed (
 ) {
   const shouldCache = !isServerRendering()
   if (typeof userDef === 'function') {
+    //获取computed值时会从lazyWathcer上获取值，并在lazyWatcher上做了缓存处理
     sharedPropertyDefinition.get = shouldCache
       ? createComputedGetter(key)
       : createGetterInvoker(userDef)
@@ -240,6 +245,7 @@ export function defineComputed (
         ? createComputedGetter(key)
         : createGetterInvoker(userDef.get)
       : noop
+    //修改computed值是会触发用户定义的set
     sharedPropertyDefinition.set = userDef.set || noop
   }
   if (process.env.NODE_ENV !== 'production' &&
@@ -256,19 +262,23 @@ export function defineComputed (
 
 function createComputedGetter (key) {
   return function computedGetter () {
+    //找到key对应的lazyWatcher
     const watcher = this._computedWatchers && this._computedWatchers[key]
     if (watcher) {
+      //调用用户传入的get获取值，会根据dirty做缓存处理
       if (watcher.dirty) {
         watcher.evaluate()
       }
+      //依赖收集
       if (Dep.target) {
         watcher.depend()
       }
+      //返回computed值
       return watcher.value
     }
   }
 }
-
+//用于服务端渲染
 function createGetterInvoker(fn) {
   return function computedGetter () {
     return fn.call(this, this)
@@ -279,6 +289,7 @@ function initMethods (vm: Component, methods: Object) {
   const props = vm.$options.props
   for (const key in methods) {
     if (process.env.NODE_ENV !== 'production') {
+      //校验methods中每一项是否是函数
       if (typeof methods[key] !== 'function') {
         warn(
           `Method "${key}" has type "${typeof methods[key]}" in the component definition. ` +
@@ -286,6 +297,7 @@ function initMethods (vm: Component, methods: Object) {
           vm
         )
       }
+      //校验methods中每一项是否与props的key重复
       if (props && hasOwn(props, key)) {
         warn(
           `Method "${key}" has already been defined as a prop.`,
@@ -299,6 +311,7 @@ function initMethods (vm: Component, methods: Object) {
         )
       }
     }
+    //将函数通过bind绑定this到Vue实例
     vm[key] = typeof methods[key] !== 'function' ? noop : bind(methods[key], vm)
   }
 }
