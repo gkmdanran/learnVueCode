@@ -35,7 +35,7 @@ const sharedPropertyDefinition = {
   get: noop,
   set: noop
 }
-
+//代理对象
 export function proxy (target: Object, sourceKey: string, key: string) {
   sharedPropertyDefinition.get = function proxyGetter () {
     return this[sourceKey][key]
@@ -169,6 +169,7 @@ export function getData (data: Function, vm: Component): any {
   // #7573 disable dep collection when invoking data getters
   pushTarget()
   try {
+    //调用data函数获得data对象
     return data.call(vm, vm)
   } catch (e) {
     handleError(e, vm, `data()`)
@@ -212,7 +213,7 @@ function initComputed (vm: Component, computed: Object) {
     // component prototype. We only need to define computed properties defined
     // at instantiation here.
     if (!(key in vm)) {
-      //将computed处理后添加到Vue实例
+      //将computed处理后添加到Vue实例，通过this.xxx可以访问
       defineComputed(vm, key, userDef)
     } else if (process.env.NODE_ENV !== 'production') {
       //校验重复
@@ -304,7 +305,7 @@ function initMethods (vm: Component, methods: Object) {
           vm
         )
       }
-      if ((key in vm) && isReserved(key)) {
+      if ((key in vm) && isReserved(key)) {//是否与$ 和 _ 开头的内置方法重叠
         warn(
           `Method "${key}" conflicts with an existing Vue instance method. ` +
           `Avoid defining component methods that start with _ or $.`
@@ -319,6 +320,7 @@ function initMethods (vm: Component, methods: Object) {
 function initWatch (vm: Component, watch: Object) {
   for (const key in watch) {
     const handler = watch[key]
+    //watch[key]对应的是一个数组就循环调用createWatcher去创建用户watcher
     if (Array.isArray(handler)) {
       for (let i = 0; i < handler.length; i++) {
         createWatcher(vm, key, handler[i])
