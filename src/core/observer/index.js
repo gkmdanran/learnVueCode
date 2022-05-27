@@ -38,12 +38,15 @@ export class Observer {
   value: any;
   dep: Dep;
   vmCount: number; // number of vms that have this object as root $data
-
+  //new Observer时会执行构造函数
   constructor (value: any) {
     this.value = value
+    //每一个被侦测的对象都会对应创建一个Dep，用于后续依赖收集
     this.dep = new Dep()
     this.vmCount = 0
+    //将当前这个Observer实例添加到对象的__ob__上，这也是响应式化的标记
     def(value, '__ob__', this)
+    //value是数组走这里
     if (Array.isArray(value)) {
       if (hasProto) {
         protoAugment(value, arrayMethods)
@@ -52,6 +55,7 @@ export class Observer {
       }
       this.observeArray(value)
     } else {
+      //value是对象走这里
       this.walk(value)
     }
   }
@@ -63,7 +67,9 @@ export class Observer {
    */
   walk (obj: Object) {
     const keys = Object.keys(obj)
+    //遍历对象的key
     for (let i = 0; i < keys.length; i++) {
+      //拦截对象的访问和设置
       defineReactive(obj, keys[i])
     }
   }
@@ -108,12 +114,16 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
  * or the existing observer if the value already has one.
  */
 export function observe (value: any, asRootData: ?boolean): Observer | void {
+  //如果不是对象，则直接return 不做处理
   if (!isObject(value) || value instanceof VNode) {
     return
   }
   let ob: Observer | void
+  //如果传进来对象上有__ob__，并且值是Observer的实例
   if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
+    //就获取这Observer的实例
     ob = value.__ob__
+    //如果shouldObserve为true并且不是服务端渲染，传进来的参数是一个对象或数组，并且不能是Vue
   } else if (
     shouldObserve &&
     !isServerRendering() &&
@@ -121,11 +131,13 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
     Object.isExtensible(value) &&
     !value._isVue
   ) {
+    //那就创建一个Observer实例
     ob = new Observer(value)
   }
   if (asRootData && ob) {
     ob.vmCount++
   }
+  //返回Observer实例
   return ob
 }
 
@@ -139,6 +151,7 @@ export function defineReactive (
   customSetter?: ?Function,
   shallow?: boolean
 ) {
+  //每一个key都会对应一个dep，用于访问key时依赖收集
   const dep = new Dep()
 
   const property = Object.getOwnPropertyDescriptor(obj, key)
@@ -153,16 +166,20 @@ export function defineReactive (
     val = obj[key]
   }
 
-  let childOb = !shallow && observe(val)
+  let childOb = !shallow && observe(val)  //递归，key对应的值有可能也是object或array，因此也需要侦测
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
     get: function reactiveGetter () {
-      const value = getter ? getter.call(obj) : val
+      const value = getter ? getter.call(obj) : val  //获取值
+      //当前存在操作的Watcher
       if (Dep.target) {
+        //依赖收集
         dep.depend()
         if (childOb) {
+          //key对应的value经过observe(value)后，也会有一个__ob__：Observer实例。实例上存在dep，需要对于value依赖收集
           childOb.dep.depend()
+          //如果value是数组则循环每一项收集依赖
           if (Array.isArray(value)) {
             dependArray(value)
           }
