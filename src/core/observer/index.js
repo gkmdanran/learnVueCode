@@ -48,11 +48,15 @@ export class Observer {
     def(value, '__ob__', this)
     //value是数组走这里
     if (Array.isArray(value)) {
+      //劫持数组的push,pop,shift,unshift,splice,sort,reverse方法，重写
+      //如果当前环境支持__proto__，则使用原型链
       if (hasProto) {
         protoAugment(value, arrayMethods)
       } else {
+        //否则将方法一个个定义到数组上
         copyAugment(value, arrayMethods, arrayKeys)
       }
+      //侦测数组
       this.observeArray(value)
     } else {
       //value是对象走这里
@@ -79,6 +83,7 @@ export class Observer {
    */
   observeArray (items: Array<any>) {
     for (let i = 0, l = items.length; i < l; i++) {
+      //循环数组，侦测每一项
       observe(items[i])
     }
   }
@@ -190,6 +195,7 @@ export function defineReactive (
     set: function reactiveSetter (newVal) {
       const value = getter ? getter.call(obj) : val
       /* eslint-disable no-self-compare */
+      //如果新值和旧值相同则不做处理，这里需要特殊处理NaN,因为NaN!==NaN
       if (newVal === value || (newVal !== newVal && value !== value)) {
         return
       }
@@ -202,9 +208,12 @@ export function defineReactive (
       if (setter) {
         setter.call(obj, newVal)
       } else {
+        //更新值
         val = newVal
       }
+      //新设置的值可能也是对象或者数组，因此需要observe侦测
       childOb = !shallow && observe(newVal)
+      //派发更新
       dep.notify()
     }
   })
@@ -285,8 +294,10 @@ export function del (target: Array<any> | Object, key: any) {
 function dependArray (value: Array<any>) {
   for (let e, i = 0, l = value.length; i < l; i++) {
     e = value[i]
+    //对于数组的每一项进行依赖收集
     e && e.__ob__ && e.__ob__.dep.depend()
     if (Array.isArray(e)) {
+      //值依旧是数组，则递归调用
       dependArray(e)
     }
   }
