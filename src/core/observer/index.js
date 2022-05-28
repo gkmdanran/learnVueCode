@@ -230,15 +230,20 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
   ) {
     warn(`Cannot set reactive property on undefined, null, or primitive value: ${(target: any)}`)
   }
+  //target是数组
   if (Array.isArray(target) && isValidArrayIndex(key)) {
+    //如果索引大于数组长度，则增大数组长度
     target.length = Math.max(target.length, key)
+    //插入新值，调用splice时这里会派发更新，因为splice是被重写过的方法
     target.splice(key, 1, val)
     return val
   }
+  //如果是对象，并且key原本就存在于target上，那么就表示这个key已经被响应式处理过了，直接设置值。
   if (key in target && !(key in Object.prototype)) {
     target[key] = val
     return val
   }
+  //获取target对应的Observer实例，用来获取实例上的dep
   const ob = (target: any).__ob__
   if (target._isVue || (ob && ob.vmCount)) {
     process.env.NODE_ENV !== 'production' && warn(
@@ -247,11 +252,14 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
     )
     return val
   }
+  //如果没有Observer实例，那就说明处理的target就不是响应式对象，直接设置值即可
   if (!ob) {
     target[key] = val
     return val
   }
+  //如果存在Observer实例，说明target是响应式对象，因此新增的值需要做响应式处理，通过defineReactive设置新值。
   defineReactive(ob.value, key, val)
+  //同时触发target对应的dep的派发更新
   ob.dep.notify()
   return val
 }
@@ -265,10 +273,13 @@ export function del (target: Array<any> | Object, key: any) {
   ) {
     warn(`Cannot delete reactive property on undefined, null, or primitive value: ${(target: any)}`)
   }
+  //如果target是数组
   if (Array.isArray(target) && isValidArrayIndex(key)) {
+    //通过splice删除数组中元素，因为splice是被重写过的方法，所以会派发更新。
     target.splice(key, 1)
     return
   }
+   //获取target对应的Observer实例，用来获取实例上的dep
   const ob = (target: any).__ob__
   if (target._isVue || (ob && ob.vmCount)) {
     process.env.NODE_ENV !== 'production' && warn(
@@ -277,13 +288,17 @@ export function del (target: Array<any> | Object, key: any) {
     )
     return
   }
+  //如果要删除的key不存在target上，那什么也不做，直接return
   if (!hasOwn(target, key)) {
     return
   }
+  //删除对象上的值
   delete target[key]
+  //如果target上没有Observer实例，那就不是响应式对象，直接return不做任何处理
   if (!ob) {
     return
   }
+  //是响应式对象就派发更新
   ob.dep.notify()
 }
 
