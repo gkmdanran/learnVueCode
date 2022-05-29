@@ -266,7 +266,7 @@ function createComputedGetter (key) {
     //找到key对应的lazyWatcher
     const watcher = this._computedWatchers && this._computedWatchers[key]
     if (watcher) {
-      //调用用户传入的get获取值，会根据dirty做缓存处理
+      //调用用户传入的get获取值，会根据dirty做缓存处理，只有dirty为true才会计算
       if (watcher.dirty) {
         watcher.evaluate()
       }
