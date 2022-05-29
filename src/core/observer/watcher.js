@@ -127,6 +127,7 @@ export default class Watcher {
       // dependencies for deep watching
       //深度监听
       if (this.deep) {
+        //递归读取对象或数组内的每个值，触发Object.defineProperty的get，来收集依赖
         traverse(value)
       }
       //操作完毕，指向前一个watcher
