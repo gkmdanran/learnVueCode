@@ -18,6 +18,7 @@ import {
   defineReactive
 } from '../util/index'
 
+//初始化全局API
 export function initGlobalAPI (Vue: GlobalAPI) {
   // config
   const configDef = {}
@@ -29,6 +30,7 @@ export function initGlobalAPI (Vue: GlobalAPI) {
       )
     }
   }
+  //构造函数上添加全局配置
   Object.defineProperty(Vue, 'config', configDef)
 
   // exposed util methods.
