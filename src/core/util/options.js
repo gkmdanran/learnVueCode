@@ -261,6 +261,7 @@ strats.provide = mergeDataOrFn
 /**
  * Default strategy.
  */
+//默认合并策略，childVal优先级高于parentVal，有childVal就优先使用childVal，没有才使用parentVal
 const defaultStrat = function (parentVal: any, childVal: any): any {
   return childVal === undefined
     ? parentVal
@@ -295,12 +296,14 @@ export function validateComponentName (name: string) {
  * Ensure all props option syntax are normalized into the
  * Object-based format.
  */
+//标准化处理props
 function normalizeProps (options: Object, vm: ?Component) {
   const props = options.props
   if (!props) return
   const res = {}
   let i, val, name
   if (Array.isArray(props)) {
+    //props是数组，将数组处理成对象形式{xxx:{type:null}}
     i = props.length
     while (i--) {
       val = props[i]
@@ -312,9 +315,11 @@ function normalizeProps (options: Object, vm: ?Component) {
       }
     }
   } else if (isPlainObject(props)) {
+    //如果是对象
     for (const key in props) {
       val = props[key]
       name = camelize(key)
+      //value是对象不做处理，如果不是对象value当作props的type
       res[name] = isPlainObject(val)
         ? val
         : { type: val }
@@ -326,23 +331,27 @@ function normalizeProps (options: Object, vm: ?Component) {
       vm
     )
   }
+  //处理好的props重新赋值给props
   options.props = res
 }
 
 /**
  * Normalize all injections into Object-based format
  */
+//标准化处理inject
 function normalizeInject (options: Object, vm: ?Component) {
   const inject = options.inject
   if (!inject) return
   const normalized = options.inject = {}
   if (Array.isArray(inject)) {
+    //如果是数组，则每一项都当做自身的from，{key1：{from:"key1"}}
     for (let i = 0; i < inject.length; i++) {
       normalized[inject[i]] = { from: inject[i] }
     }
   } else if (isPlainObject(inject)) {
     for (const key in inject) {
       const val = inject[key]
+      //如果是对象，value也是对象：如果对象上没设置key，那么form就是本身。value不是对象，from就是value
       normalized[key] = isPlainObject(val)
         ? extend({ from: key }, val)
         : { from: val }
@@ -359,12 +368,14 @@ function normalizeInject (options: Object, vm: ?Component) {
 /**
  * Normalize raw function directives into object format.
  */
+//标准化处理Directives
 function normalizeDirectives (options: Object) {
   const dirs = options.directives
   if (dirs) {
     for (const key in dirs) {
       const def = dirs[key]
       if (typeof def === 'function') {
+        //每一个指令对应的函数都会在bind和update时触发
         dirs[key] = { bind: def, update: def }
       }
     }
@@ -391,13 +402,14 @@ export function mergeOptions (
   vm?: Component
 ): Object {
   if (process.env.NODE_ENV !== 'production') {
+    //校验组件名
     checkComponents(child)
   }
 
   if (typeof child === 'function') {
     child = child.options
   }
-
+  // 标准化 props、inject、directive 选项，方便后续程序的处理
   normalizeProps(child, vm)
   normalizeInject(child, vm)
   normalizeDirectives(child)
@@ -406,6 +418,8 @@ export function mergeOptions (
   // but only if it is a raw options object that isn't
   // the result of another mergeOptions call.
   // Only merged options has the _base property.
+  // 处理原始 child 对象上的 extends 和 mixins，分别执行 mergeOptions，将这些继承而来的选项合并到 parent
+  // mergeOptions 处理过的对象会含有 _base 属性
   if (!child._base) {
     if (child.extends) {
       parent = mergeOptions(parent, child.extends, vm)
@@ -422,15 +436,19 @@ export function mergeOptions (
   for (key in parent) {
     mergeField(key)
   }
+  // 遍历 子选项，如果父选项不存在该配置，则合并，否则跳过，因为父子拥有同一个属性的情况在上面处理父选项时已经处理过了，用的子选项的值
   for (key in child) {
     if (!hasOwn(parent, key)) {
       mergeField(key)
     }
   }
   function mergeField (key) {
+    //根据key从合并策略对象上找到相应的合并策略，如果没找到就使用默认的合并策略
     const strat = strats[key] || defaultStrat
+    //使用不同策略合并
     options[key] = strat(parent[key], child[key], vm, key)
   }
+  //得到合并后的options
   return options
 }
 
