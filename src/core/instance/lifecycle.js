@@ -146,6 +146,7 @@ export function mountComponent (
 ): Component {
   vm.$el = el
   if (!vm.$options.render) {
+    //options上没有render函数就创建一个空的vnode
     vm.$options.render = createEmptyVNode
     if (process.env.NODE_ENV !== 'production') {
       /* istanbul ignore if */
@@ -165,6 +166,7 @@ export function mountComponent (
       }
     }
   }
+  //开始挂载，执行beforeMount生命周期函数
   callHook(vm, 'beforeMount')
 
   let updateComponent
@@ -187,7 +189,10 @@ export function mountComponent (
       measure(`vue ${name} patch`, startTag, endTag)
     }
   } else {
+    //更新视图的函数
     updateComponent = () => {
+      //vm._render()生成vnode
+      //vm._update进项patch
       vm._update(vm._render(), hydrating)
     }
   }
@@ -195,6 +200,7 @@ export function mountComponent (
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
+  //创建渲染watcher
   new Watcher(vm, updateComponent, noop, {
     before () {
       if (vm._isMounted && !vm._isDestroyed) {
@@ -208,6 +214,7 @@ export function mountComponent (
   // mounted is called for render-created child components in its inserted hook
   if (vm.$vnode == null) {
     vm._isMounted = true
+    //挂载完成后，执行mounted生命周期函数
     callHook(vm, 'mounted')
   }
   return vm
