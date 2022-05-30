@@ -225,8 +225,19 @@ export function parse (
       if (isIE && ns === 'svg') {
         attrs = guardIESVGBug(attrs)
       }
-
+    
       let element: ASTElement = createASTElement(tag, attrs, currentParent)
+      // {
+      //   type: 1,
+      //   tag:"div"
+      //   attrsList:[{name: 'name', value: '222', start: 5, end: 15}],
+      //   attrsMap: {name:"222"},
+      //   rawAttrsMap: {
+      //     name: {name: 'name', value: '222', start: 5, end: 15}
+      //   },
+      //   parent:undefined
+      //   children: []
+      // }
       if (ns) {
         element.ns = ns
       }
@@ -265,6 +276,7 @@ export function parse (
       }
 
       // apply pre-transforms
+      //处理存在 v-model 指令的 input 标签，分别处理 input 为 checkbox、radio、其它的情况。
       for (let i = 0; i < preTransforms.length; i++) {
         element = preTransforms[i](element, options) || element
       }
@@ -493,9 +505,12 @@ function processRef (el) {
 
 export function processFor (el: ASTElement) {
   let exp
+  //从attrsMap上获取v-for的值，并且从attrsList中移除v-for,exp="(val,key,index) in obj"
   if ((exp = getAndRemoveAttr(el, 'v-for'))) {
     const res = parseFor(exp)
+    //res={for: 'obj', alias: 'val', iterator1: 'key', iterator2: 'index'}
     if (res) {
+      //添加到ast上
       extend(el, res)
     } else if (process.env.NODE_ENV !== 'production') {
       warn(
@@ -589,6 +604,7 @@ export function addIfCondition (el: ASTElement, condition: ASTIfCondition) {
   if (!el.ifConditions) {
     el.ifConditions = []
   }
+  //ast的ifConditions对应的数组添加:{exp:"xxx===xxx",block:对应的ast}
   el.ifConditions.push(condition)
 }
 

@@ -24,11 +24,15 @@
         new Vue({
             el: '#app',
             data: {
-                msg: 'hello vue'
+                msg: 'hello vue',
+                obj:{
+                    key1:1,
+                    key2:2
+                }
             },
             template: `
             <div name="222">
-                <span>333</span>
+                <input type="checkbox" v-for="(val,key,index) in obj">
             </div>
             `
         })
