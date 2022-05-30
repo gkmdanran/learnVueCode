@@ -31,6 +31,7 @@ const strats = config.optionMergeStrategies
 /**
  * Options with restrictions
  */
+//el和propsData的合并方式，校验了实例是否存在，然后调用的依旧是defaultStrat合并
 if (process.env.NODE_ENV !== 'production') {
   strats.el = strats.propsData = function (parent, child, vm, key) {
     if (!vm) {
@@ -49,7 +50,7 @@ if (process.env.NODE_ENV !== 'production') {
 function mergeData (to: Object, from: ?Object): Object {
   if (!from) return to
   let key, toVal, fromVal
-
+  //获取父项所有keys并兼容symbol类型
   const keys = hasSymbol
     ? Reflect.ownKeys(from)
     : Object.keys(from)
@@ -61,12 +62,14 @@ function mergeData (to: Object, from: ?Object): Object {
     toVal = to[key]
     fromVal = from[key]
     if (!hasOwn(to, key)) {
+      //响应式添加值
       set(to, key, fromVal)
     } else if (
       toVal !== fromVal &&
       isPlainObject(toVal) &&
       isPlainObject(fromVal)
     ) {
+      //值是对象，则递归调用mergeData合并data。
       mergeData(toVal, fromVal)
     }
   }
@@ -94,6 +97,7 @@ export function mergeDataOrFn (
     // merged result of both functions... no need to
     // check if parentVal is a function here because
     // it has to be a function to pass previous merges.
+    //如果是函数则调用函数获得对象
     return function mergedDataFn () {
       return mergeData(
         typeof childVal === 'function' ? childVal.call(this, this) : childVal,
@@ -147,6 +151,9 @@ function mergeHook (
   parentVal: ?Array<Function>,
   childVal: ?Function | ?Array<Function>
 ): ?Array<Function> {
+  //没有childVal就使用parentVal，有childVal就会判断是否有parentVal。
+  //有parentVal就会将parentVal和childVal合并成数组
+  //没有parentVal就会判断childVal是否是数组，不是数组就将childVal包装成数组返回
   const res = childVal
     ? parentVal
       ? parentVal.concat(childVal)
@@ -155,7 +162,7 @@ function mergeHook (
         : [childVal]
     : parentVal
   return res
-    ? dedupeHooks(res)
+    ? dedupeHooks(res)      //去重
     : res
 }
 
@@ -168,7 +175,8 @@ function dedupeHooks (hooks) {
   }
   return res
 }
-
+// 'beforeCreate','created','beforeMount','mounted','beforeUpdate','updated','beforeDestroy','destroyed',
+// 'activated','deactivated','errorCaptured','serverPrefetch' 合并方式
 LIFECYCLE_HOOKS.forEach(hook => {
   strats[hook] = mergeHook
 })
@@ -186,15 +194,17 @@ function mergeAssets (
   vm?: Component,
   key: string
 ): Object {
+  //基于parentVal创建一个对象，parentVal不存在则创建空对象
   const res = Object.create(parentVal || null)
   if (childVal) {
     process.env.NODE_ENV !== 'production' && assertObjectType(key, childVal, vm)
+    //childVal添加到res对象上，key相同childVal会覆盖res的值
     return extend(res, childVal)
   } else {
     return res
   }
 }
-
+//components,directives,filters的合并策略
 ASSET_TYPES.forEach(function (type) {
   strats[type + 's'] = mergeAssets
 })
@@ -212,16 +222,20 @@ strats.watch = function (
   key: string
 ): ?Object {
   // work around Firefox's Object.prototype.watch...
+  //处理Firefox浏览器下也存在watch的情况
   if (parentVal === nativeWatch) parentVal = undefined
   if (childVal === nativeWatch) childVal = undefined
   /* istanbul ignore if */
+  //childVal不存在直接返回parentVal
   if (!childVal) return Object.create(parentVal || null)
   if (process.env.NODE_ENV !== 'production') {
     assertObjectType(key, childVal, vm)
   }
+  //parentVal不存在直接返回childVal
   if (!parentVal) return childVal
   const ret = {}
   extend(ret, parentVal)
+  //使合并后的每一个key对应的value都是数组
   for (const key in childVal) {
     let parent = ret[key]
     const child = childVal[key]
@@ -232,12 +246,16 @@ strats.watch = function (
       ? parent.concat(child)
       : Array.isArray(child) ? child : [child]
   }
+  // ret={
+  //   "key1":[parentWatch1,childWatch1]
+  // }
   return ret
 }
 
 /**
  * Other object hashes.
  */
+//props，methods，inject，computed合并策略
 strats.props =
 strats.methods =
 strats.inject =
@@ -250,12 +268,15 @@ strats.computed = function (
   if (childVal && process.env.NODE_ENV !== 'production') {
     assertObjectType(key, childVal, vm)
   }
+  //parentVal不存在直接返回childVal
   if (!parentVal) return childVal
   const ret = Object.create(null)
   extend(ret, parentVal)
+  //子项存在直接合并到父项
   if (childVal) extend(ret, childVal)
   return ret
 }
+//provide合并策略
 strats.provide = mergeDataOrFn
 
 /**
