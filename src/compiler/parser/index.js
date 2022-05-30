@@ -82,23 +82,24 @@ export function parse (
 ): ASTElement | void {
   warn = options.warn || baseWarn
 
-  platformIsPreTag = options.isPreTag || no
+  platformIsPreTag = options.isPreTag || no  //是否是pre标签
   platformMustUseProp = options.mustUseProp || no
   platformGetTagNamespace = options.getTagNamespace || no
-  const isReservedTag = options.isReservedTag || no
+  const isReservedTag = options.isReservedTag || no   //是否是内置标签
+  //判断是否是组件，ast上有component，属性存在is表示动态组件
   maybeComponent = (el: ASTElement) => !!(
     el.component ||
     el.attrsMap[':is'] ||
     el.attrsMap['v-bind:is'] ||
     !(el.attrsMap.is ? isReservedTag(el.attrsMap.is) : isReservedTag(el.tag))
   )
-  transforms = pluckModuleFunction(options.modules, 'transformNode')
-  preTransforms = pluckModuleFunction(options.modules, 'preTransformNode')
-  postTransforms = pluckModuleFunction(options.modules, 'postTransformNode')
+  transforms = pluckModuleFunction(options.modules, 'transformNode')  //style、class
+  preTransforms = pluckModuleFunction(options.modules, 'preTransformNode') //model
+  postTransforms = pluckModuleFunction(options.modules, 'postTransformNode')//无
 
   delimiters = options.delimiters
 
-  const stack = []
+  const stack = [] //用来维护ast父子关系的栈
   const preserveWhitespace = options.preserveWhitespace !== false
   const whitespaceOption = options.whitespace
   let root

@@ -54,42 +54,55 @@ function decodeAttr (value, shouldDecodeNewlines) {
 export function parseHTML (html, options) {
   const stack = []
   const expectHTML = options.expectHTML
+  // 是否是自闭合标签
   const isUnaryTag = options.isUnaryTag || no
+  // 是否可以只有开始标签
   const canBeLeftOpenTag = options.canBeLeftOpenTag || no
+  // 记录当前在原始 html 字符串中的开始位置
   let index = 0
   let last, lastTag
   while (html) {
     last = html
     // Make sure we're not in a plaintext content element like script/style
+    // 确保不是在 script、style、textarea 这样的纯文本元素中
     if (!lastTag || !isPlainTextElement(lastTag)) {
+      //获取第一个<的位置索引
       let textEnd = html.indexOf('<')
+      //如果在开头就找到了
       if (textEnd === 0) {
         // Comment:
+        //处理注释
         if (comment.test(html)) {
           const commentEnd = html.indexOf('-->')
 
           if (commentEnd >= 0) {
+            //如果需要保留注释，就调用comment钩子生成一个，注释的ast{ type: 3,text:xxxx,isComment: true}
             if (options.shouldKeepComment) {
               options.comment(html.substring(4, commentEnd), index, index + commentEnd + 3)
             }
+            //截取html，index往前移
             advance(commentEnd + 3)
             continue
           }
         }
-
+        
         // http://en.wikipedia.org/wiki/Conditional_comment#Downlevel-revealed_conditional_comment
+        //处理条件注释
         if (conditionalComment.test(html)) {
           const conditionalEnd = html.indexOf(']>')
 
           if (conditionalEnd >= 0) {
+            //截取html，index往前移
             advance(conditionalEnd + 2)
             continue
           }
         }
 
         // Doctype:
+        //处理Doctype
         const doctypeMatch = html.match(doctype)
         if (doctypeMatch) {
+          //截取html，index往前移
           advance(doctypeMatch[0].length)
           continue
         }
@@ -104,8 +117,11 @@ export function parseHTML (html, options) {
         }
 
         // Start tag:
+        //解析开始标签
         const startTagMatch = parseStartTag()
+        //{attrs: [],end: 39,start: 33,tagName: "span",unarySlash: ""}
         if (startTagMatch) {
+          //处理开始标签，处理attrs，调用钩子函数start
           handleStartTag(startTagMatch)
           if (shouldIgnoreFirstNewline(startTagMatch.tagName, html)) {
             advance(1)
@@ -194,12 +210,14 @@ export function parseHTML (html, options) {
       }
       advance(start[0].length)
       let end, attr
+      // 处理 开始标签 内的各个属性，并将这些属性放到 match.attrs 数组中
       while (!(end = html.match(startTagClose)) && (attr = html.match(dynamicArgAttribute) || html.match(attribute))) {
         attr.start = index
         advance(attr[0].length)
         attr.end = index
         match.attrs.push(attr)
       }
+      // 开始标签的结束，end = '>' 或 end = ' />'
       if (end) {
         match.unarySlash = end[1]
         advance(end[0].length)
@@ -221,10 +239,11 @@ export function parseHTML (html, options) {
         parseEndTag(tagName)
       }
     }
-
+    //判断是否是自闭合标签
     const unary = isUnaryTag(tagName) || !!unarySlash
 
     const l = match.attrs.length
+    //处理attrs
     const attrs = new Array(l)
     for (let i = 0; i < l; i++) {
       const args = match.attrs[i]
@@ -236,17 +255,27 @@ export function parseHTML (html, options) {
         name: args[1],
         value: decodeAttr(value, shouldDecodeNewlines)
       }
+      //attrs变成[{name:"name",value:"xiaoming"},...]
       if (process.env.NODE_ENV !== 'production' && options.outputSourceRange) {
         attrs[i].start = args.start + args[0].match(/^\s*/).length
         attrs[i].end = args.end
       }
     }
-
+    // 如果不是自闭合标签，则将标签信息放到 stack 数组中，待将来处理到它的闭合标签时再将其弹出 stack
+    // 如果是自闭合标签，则标签信息就没必要进入 stack 了，直接处理众多属性，将他们都设置到 element ast 对象上，就没有处理 结束标签的那一步了，这一步在处理开始标签的过程中就进行了
     if (!unary) {
       stack.push({ tag: tagName, lowerCasedTag: tagName.toLowerCase(), attrs: attrs, start: match.start, end: match.end })
       lastTag = tagName
     }
-
+    /**
+     * 调用 start 方法，主要做了以下 6 件事情:
+     *   1、创建 AST 对象
+     *   2、处理存在 v-model 指令的 input 标签，分别处理 input 为 checkbox、radio、其它的情况
+     *   3、处理标签上的众多指令，比如 v-pre、v-for、v-if、v-once
+     *   4、如果根节点 root 不存在则设置当前元素为根节点
+     *   5、如果当前元素为非自闭合标签则将自己 push 到 stack 数组，并记录 currentParent，在接下来处理子元素时用来告诉子元素自己的父节点是谁
+     *   6、如果当前元素为自闭合标签，则表示该标签要处理结束了，让自己和父元素产生关系，以及设置自己的子元素
+     */
     if (options.start) {
       options.start(tagName, attrs, unary, match.start, match.end)
     }
