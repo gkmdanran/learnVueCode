@@ -71,8 +71,11 @@ function preTransformNode (el: ASTElement, options: CompilerOptions) {
         block: branch0
       })
       // 2. add radio else-if condition
+      //克隆一个ast，处理type=radio的情况
       const branch1 = cloneASTElement(el)
+      //从attrsList和attrsMap中移除v-for
       getAndRemoveAttr(branch1, 'v-for', true)
+      //attrsMap上添加type:"radio",attrsList添加{name:"type",value:"radio"}
       addRawAttr(branch1, 'type', 'radio')
       processElement(branch1, options)
       addIfCondition(branch0, {
@@ -80,6 +83,7 @@ function preTransformNode (el: ASTElement, options: CompilerOptions) {
         block: branch1
       })
       // 3. other
+      //其他情况
       const branch2 = cloneASTElement(el)
       getAndRemoveAttr(branch2, 'v-for', true)
       addRawAttr(branch2, ':type', typeBinding)

@@ -19,7 +19,9 @@
                     default: 'defaultName'
                 }
             },
-            template: `<div>{{name}}</div>`
+            template: `<div>
+                <slot name="test"></slot>
+            </div>`
         })
         new Vue({
             el: '#app',
@@ -31,8 +33,12 @@
                 }
             },
             template: `
-            <div name="222">
-                <input type="checkbox" v-for="(val,key,index) in obj">
+            <div>
+                <cmp>
+                    <template slot-scope="scope">
+                        <span>333</span>
+                    </template>
+                </cmp>
             </div>
             `
         })

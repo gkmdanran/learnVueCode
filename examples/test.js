@@ -20,5 +20,32 @@ const Astelement = {
     for: 'obj', 
     alias: 'val', 
     iterator1: 'key', 
-    iterator2: 'index'
+    iterator2: 'index',
+    key:"keyval",
+    //是否是普通元素
+    plain:false,
+    //ref
+    ref: "xxx",
+    refInFor: false, //ref是否在for中
+    //插槽在template情况
+    slotScope:"scope", //作用域插槽
+    slotTarget:"default", //具名插槽
+    slotTargetDynamic:false,//是否是动态插槽名
+    //插槽v-slot在组件上的情况
+    scopedSlots:{
+        testName:{
+            slotTarget:"testName",
+            slotTargetDynamic:false,
+            slotScope:"scope",
+            children:[
+                {
+                    parent:"指向的是testName这个对象"
+                }
+            ]
+        },
+        testName2:{
+            //.....
+        }
+        //....
+    }
 }
