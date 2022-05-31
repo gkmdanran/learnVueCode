@@ -460,15 +460,27 @@ export function processElement (
   )
   //处理ref，判断ref是否在for中
   processRef(element)
-  //处理插槽内容
+  // 处理作为插槽传递给组件的内容，得到  插槽名称、是否为动态插槽、作用域插槽的值，以及插槽中的所有子元素，子元素放到插槽对象的 children 属性中
   processSlotContent(element)
+  // 处理自闭合的 slot 标签，得到插槽名称 => el.slotName = xx
   processSlotOutlet(element)
-  //处理组件
+  // 处理动态组件，<component :is="compoName"></component>得到 el.component = compName，
+  // 以及标记是否存在内联模版，el.inlineTemplate = true of false
   processComponent(element)
   //处理style和class的transformNode
+  // 分别存放静态 style 属性的值、动态 style 属性的值，以及静态 class 属性的值和动态 class 属性的值
   for (let i = 0; i < transforms.length; i++) {
     element = transforms[i](element, options) || element
   }
+  /**
+   * 处理元素上的所有属性：
+   * v-bind 指令变成：el.attrs 或 el.dynamicAttrs = [{ name, value, start, end, dynamic }, ...]，
+   *                或者是必须使用 props 的属性，变成了 el.props = [{ name, value, start, end, dynamic }, ...]
+   * v-on 指令变成：el.events 或 el.nativeEvents = { name: [{ value, start, end, modifiers, dynamic }, ...] }
+   * 其它指令：el.directives = [{name, rawName, value, arg, isDynamicArg, modifier, start, end }, ...]
+   * 原生属性：el.attrs = [{ name, value, start, end }]，或者一些必须使用 props 的属性，变成了：
+   *         el.props = [{ name, value: true, start, end, dynamic }]
+  */
   processAttrs(element)
   return element
 }
