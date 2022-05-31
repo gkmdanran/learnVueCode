@@ -57,4 +57,6 @@ const Astelement = {
     // style
     staticStyle: "{\"height\":\"200px\"}",
     styleBinding: "动态style",
+    //processAttr
+    hasBindings: true,
 }

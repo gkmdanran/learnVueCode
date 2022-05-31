@@ -846,28 +846,42 @@ function processComponent (el) {
 function processAttrs (el) {
   const list = el.attrsList
   let i, l, name, rawName, value, modifiers, syncGen, isDynamic
+  //循环attrsList
   for (i = 0, l = list.length; i < l; i++) {
+    //属性名
     name = rawName = list[i].name
+    //属性值
     value = list[i].value
+    //如果属性是一个指令
     if (dirRE.test(name)) {
       // mark element as dynamic
+      //标记为动态元素
       el.hasBindings = true
       // modifiers
+      // 解析属性上的修饰符,v-model.lazy;
+      //name.replace(dirRE, '')=model.lazy;
+      //modifiers={lazy:true}
       modifiers = parseModifiers(name.replace(dirRE, ''))
       // support .foo shorthand syntax for the .prop modifier
-      if (process.env.VBIND_PROP_SHORTHAND && propBindRE.test(name)) {
+      if (process.env.VBIND_PROP_SHORTHAND && propBindRE.test(name)) { //markGKM
         (modifiers || (modifiers = {})).prop = true
         name = `.` + name.slice(1).replace(modifierRE, '')
       } else if (modifiers) {
+        //如果存在修饰符，属性名去掉修饰符
         name = name.replace(modifierRE, '')
       }
+      //如果属性名存在v-bind指令
       if (bindRE.test(name)) { // v-bind
+        //属性名去除v-bind
         name = name.replace(bindRE, '')
         value = parseFilters(value)
+        // 是否为动态属性 <div :[id]="test"></div>
         isDynamic = dynamicArgRE.test(name)
         if (isDynamic) {
+          // 如果是动态属性，则去掉属性两侧的方括号 []
           name = name.slice(1, -1)
         }
+        // 提示，动态属性值不能为空字符串
         if (
           process.env.NODE_ENV !== 'production' &&
           value.trim().length === 0
@@ -877,13 +891,18 @@ function processAttrs (el) {
           )
         }
         if (modifiers) {
+          //处理.prop修饰符
           if (modifiers.prop && !isDynamic) {
+            //短横线处理成驼峰
             name = camelize(name)
+            //innerHTML特殊处理
             if (name === 'innerHtml') name = 'innerHTML'
           }
+          //处理.camel修饰符
           if (modifiers.camel && !isDynamic) {
             name = camelize(name)
           }
+          //处理.sync修饰符
           if (modifiers.sync) {
             syncGen = genAssignmentCode(value, `$event`)
             if (!isDynamic) {

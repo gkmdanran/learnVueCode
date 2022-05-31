@@ -30,16 +30,23 @@
                 obj:{
                     key1:1,
                     key2:2
-                }
+                },
+                type:"text"
             },
+            // template: `
+            // <div style="height:200px">
+            //     <cmp>
+            //         <template slot-scope="scope">
+            //             <span>333</span>
+            //         </template>
+            //     </cmp>
+            // </div>
+            // `
             template: `
-            <div style="height:200px">
-                <cmp>
-                    <template slot-scope="scope">
-                        <span>333</span>
-                    </template>
-                </cmp>
-            </div>
+                <div>
+                <input v-model.number.lazy="msg" v-bind:type="type">
+                    {{msg}}
+                </div>
             `
         })
 
