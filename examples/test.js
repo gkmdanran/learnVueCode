@@ -13,39 +13,48 @@ const Astelement = {
     processed: true,
     // v-if="flag===true"
     ifConditions: [{ exp: "(flag===true)", block: Astelement }],
-    if:"(flag===true)",
-    else:true,
-    elseif:"xxx===xxx",
+    if: "(flag===true)",
+    else: true,
+    elseif: "xxx===xxx",
     // v-for="(val,key,index) in obj"
-    for: 'obj', 
-    alias: 'val', 
-    iterator1: 'key', 
+    for: 'obj',
+    alias: 'val',
+    iterator1: 'key',
     iterator2: 'index',
-    key:"keyval",
+    key: "keyval",
     //是否是普通元素
-    plain:false,
+    plain: false,
     //ref
     ref: "xxx",
     refInFor: false, //ref是否在for中
     //插槽在template情况
-    slotScope:"scope", //作用域插槽
-    slotTarget:"default", //具名插槽
-    slotTargetDynamic:false,//是否是动态插槽名
+    slotScope: "scope", //作用域插槽
+    slotTarget: "default", //具名插槽
+    slotTargetDynamic: false,//是否是动态插槽名
     //插槽v-slot在组件上的情况
-    scopedSlots:{
-        testName:{
-            slotTarget:"testName",
-            slotTargetDynamic:false,
-            slotScope:"scope",
-            children:[
+    scopedSlots: {
+        testName: {
+            slotTarget: "testName",
+            slotTargetDynamic: false,
+            slotScope: "scope",
+            children: [
                 {
-                    parent:"指向的是testName这个对象"
+                    parent: "指向的是testName这个对象"
                 }
             ]
         },
-        testName2:{
+        testName2: {
             //.....
         }
         //....
-    }
+    },
+    // 动态组件
+    component: "cmp",
+    inlineTemplate: false,
+    // class
+    staticClass: "testclass",
+    classBinding: "动态class",
+    // style
+    staticStyle: "{\"height\":\"200px\"}",
+    styleBinding: "动态style",
 }

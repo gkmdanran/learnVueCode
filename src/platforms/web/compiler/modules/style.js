@@ -10,6 +10,7 @@ import {
 
 function transformNode (el: ASTElement, options: CompilerOptions) {
   const warn = options.warn || baseWarn
+  //从attrsMap上获取style的值，并且从attrsList中移除style
   const staticStyle = getAndRemoveAttr(el, 'style')
   if (staticStyle) {
     /* istanbul ignore if */
@@ -25,11 +26,13 @@ function transformNode (el: ASTElement, options: CompilerOptions) {
         )
       }
     }
+    // 将静态的 style 样式赋值给 el.staticStyle
     el.staticStyle = JSON.stringify(parseStyleText(staticStyle))
   }
-
+  //从attrsMap上获取:style或v-bind:style的值，并且从attrsList中移除:style或v-bind:style
   const styleBinding = getBindingAttr(el, 'style', false /* getStatic */)
   if (styleBinding) {
+    //如果存在动态style，就在ast上添加
     el.styleBinding = styleBinding
   }
 }

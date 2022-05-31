@@ -463,7 +463,9 @@ export function processElement (
   //处理插槽内容
   processSlotContent(element)
   processSlotOutlet(element)
+  //处理组件
   processComponent(element)
+  //处理style和class的transformNode
   for (let i = 0; i < transforms.length; i++) {
     element = transforms[i](element, options) || element
   }
@@ -817,10 +819,14 @@ function processSlotOutlet (el) {
 
 function processComponent (el) {
   let binding
+   //从attrsMap上获取is的值，并且从attrsList中移除is
   if ((binding = getBindingAttr(el, 'is'))) {
+    //值添加到ast的component
     el.component = binding
   }
+  //从attrsMap上获取inline-template的值，并且从attrsList中移除inline-template
   if (getAndRemoveAttr(el, 'inline-template') != null) {
+    //有值表示内联模板
     el.inlineTemplate = true
   }
 }
