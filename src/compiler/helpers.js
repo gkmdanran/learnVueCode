@@ -22,10 +22,12 @@ export function pluckModuleFunction<F: Function> (
 
 export function addProp (el: ASTElement, name: string, value: string, range?: Range, dynamic?: boolean) {
   (el.props || (el.props = [])).push(rangeSetItem({ name, value, dynamic }, range))
+  // 不是普通元素
   el.plain = false
 }
 
 export function addAttr (el: ASTElement, name: string, value: any, range?: Range, dynamic?: boolean) {
+  //如果是动态就添加到el.dynamicAttrs，不是动态添加到el.attrs
   const attrs = dynamic
     ? (el.dynamicAttrs || (el.dynamicAttrs = []))
     : (el.attrs || (el.attrs = []))
@@ -143,9 +145,10 @@ export function addHandler (
   } else if (handlers) {
     events[name] = important ? [newHandler, handlers] : [handlers, newHandler]
   } else {
+    //el.events上添加对应的事件
     events[name] = newHandler
   }
-
+  //不是普通元素
   el.plain = false
 }
 

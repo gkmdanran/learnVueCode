@@ -59,4 +59,25 @@ const Astelement = {
     styleBinding: "动态style",
     //processAttr
     hasBindings: true,
+    events: {
+        "update:visible": { value: "addVisible=$event", dynamic: undefined, start: 48, end: 74 }
+    },
+    nativeEvents: {
+        "change": { value: "msg=''", dynamic: false, start: 75, end: 98, modifiers: { stop: true } }
+    },
+    props: [
+        { name: "value", value: "msg", dynamic: false, start: 62, end: 74 }
+    ],
+    attrs: [{ name: "attrname", value: "attrname", dynamic: false, start: 62, end: 74 }],
+    dynamicAttrs: [{ name: "attrname", value: "attrname", dynamic: true, start: 62, end: 74 }],
+    directives: [{
+        arg: null,
+        end: 38,
+        isDynamicArg: false,
+        modifiers: undefined,
+        name: "text",
+        rawName: "v-text",
+        start: 26,
+        value: "msg"
+    }]
 }

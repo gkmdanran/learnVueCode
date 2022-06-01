@@ -9,45 +9,41 @@
 <body>
     <div id="app">
         {{ msg }}
+        
     </div>
     <script src="../dist/vue.js"></script>
     <script>
         Vue.component('cmp', {
             props: {
-                name: {
-                    type: String,
-                    default: 'defaultName'
+                visible: {
+                    type: Boolean,
+                    default: false
                 }
             },
             template: `<div>
-                <slot name="test"></slot>
+                <slot name="test">{{visible}}</slot>
             </div>`
         })
         new Vue({
             el: '#app',
             data: {
                 msg: 'hello vue',
-                obj:{
-                    key1:1,
-                    key2:2
+                obj: {
+                    key1: 1,
+                    key2: 2
                 },
-                type:"text"
+                addVisible: true
             },
+            template: `
+            <div style="height:200px" v-text="msg">
+                
+            </div>
+            `
             // template: `
             // <div style="height:200px">
-            //     <cmp>
-            //         <template slot-scope="scope">
-            //             <span>333</span>
-            //         </template>
-            //     </cmp>
+            //     <input type="text" :value="msg" @change="msg=''">
             // </div>
             // `
-            template: `
-                <div>
-                <input v-model.number.lazy="msg" v-bind:type="type">
-                    {{msg}}
-                </div>
-            `
         })
 
     </script>

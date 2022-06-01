@@ -904,17 +904,21 @@ function processAttrs (el) {
           }
           //处理.sync修饰符
           if (modifiers.sync) {
+            // <cmp :visible.sync="addVisible"/>
             syncGen = genAssignmentCode(value, `$event`)
             if (!isDynamic) {
               addHandler(
                 el,
-                `update:${camelize(name)}`,
-                syncGen,
+                `update:${camelize(name)}`,//"update:visible"
+                syncGen, //"addVisible=$event"
                 null,
                 false,
                 warn,
                 list[i]
               )
+              //el.events={
+              //  "update:visible": {value: "addVisible=$event", dynamic: undefined, start: 48, end: 74}
+              //}
               if (hyphenate(name) !== camelize(name)) {
                 addHandler(
                   el,
@@ -936,27 +940,37 @@ function processAttrs (el) {
                 false,
                 warn,
                 list[i],
-                true // dynamic
+                true // 动态属性
               )
             }
           }
         }
+        //如果有.prop修饰符或者 当前ast不是组件并且是必须通过props设置的属性
         if ((modifiers && modifiers.prop) || (
           !el.component && platformMustUseProp(el.tag, el.attrsMap.type, name)
         )) {
+          //添加到el.props
+          //el.props = [{ name, value, start, end, dynamic }, ...]
           addProp(el, name, value, list[i], isDynamic)
         } else {
+          // 将属性添加到 el.attrs 数组或者 el.dynamicAttrs 数组
           addAttr(el, name, value, list[i], isDynamic)
         }
       } else if (onRE.test(name)) { // v-on
+        //处理事件得到事件名
         name = name.replace(onRE, '')
+        //是否动态事件
         isDynamic = dynamicArgRE.test(name)
         if (isDynamic) {
+          // 动态属性，则获取 [] 中的属性名
           name = name.slice(1, -1)
         }
+        // 处理事件属性，将属性的信息添加到 el.events 或者 el.nativeEvents 对象上
         addHandler(el, name, value, modifiers, false, warn, list[i], isDynamic)
       } else { // normal directives
+        //处理其它的普通指令
         name = name.replace(dirRE, '')
+        console.log(name)
         // parse arg
         const argMatch = name.match(argRE)
         let arg = argMatch && argMatch[1]
@@ -968,6 +982,7 @@ function processAttrs (el) {
             isDynamic = true
           }
         }
+        // 得到 el.directives = [{name, rawName, value, arg, isDynamicArg, modifier, start, end }, ...]
         addDirective(el, name, rawName, value, arg, isDynamic, modifiers, list[i])
         if (process.env.NODE_ENV !== 'production' && name === 'model') {
           checkForAliasModel(el, value)
@@ -975,6 +990,7 @@ function processAttrs (el) {
       }
     } else {
       // literal attribute
+      // 当前属性不是指令
       if (process.env.NODE_ENV !== 'production') {
         const res = parseText(value, delimiters)
         if (res) {
@@ -987,6 +1003,7 @@ function processAttrs (el) {
           )
         }
       }
+      // 将属性对象放到 el.attrs 数组中，el.attrs = [{ name, value, start, end }]
       addAttr(el, name, JSON.stringify(value), list[i])
       // #6887 firefox doesn't update muted state if set via attribute
       // even immediately after element creation
