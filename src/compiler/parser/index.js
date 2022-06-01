@@ -150,6 +150,7 @@ export function parse (
     // 让自己和父元素产生关系
     // 将自己放到父元素的 children 数组中，然后设置自己的 parent 属性为 currentParent
     if (currentParent && !element.forbidden) {
+      //存在elseif和else时，需要添加到el.ifConditions中
       if (element.elseif || element.else) {
         processIfConditions(element, currentParent)
       } else {
@@ -639,13 +640,16 @@ function processIf (el) {
 }
 
 function processIfConditions (el, parent) {
+  // 找到 parent.children 中的最后一个元素节点
   const prev = findPrevElement(parent.children)
+  //如果元素节点存在，并且有v-if，那就加入到el.ifConditions中
   if (prev && prev.if) {
     addIfCondition(prev, {
       exp: el.elseif,
       block: el
     })
   } else if (process.env.NODE_ENV !== 'production') {
+    //否则报错，v-else和v-else-if前的元素节点必须有v-if
     warn(
       `v-${el.elseif ? ('else-if="' + el.elseif + '"') : 'else'} ` +
       `used on element <${el.tag}> without corresponding v-if.`,
@@ -653,11 +657,13 @@ function processIfConditions (el, parent) {
     )
   }
 }
-
+//找到 children 中的最后一个元素节点 
 function findPrevElement (children: Array<any>): ASTElement | void {
   let i = children.length
+  //从后往前循环children，判断是否是1，及是否元素节点
   while (i--) {
     if (children[i].type === 1) {
+      //找到最后一个元素节点返回
       return children[i]
     } else {
       if (process.env.NODE_ENV !== 'production' && children[i].text !== ' ') {
@@ -667,6 +673,7 @@ function findPrevElement (children: Array<any>): ASTElement | void {
           children[i]
         )
       }
+      //不是元素节点则移除，因为在v-if与 v-else或v-else-if 间的文本元素会被忽略
       children.pop()
     }
   }
