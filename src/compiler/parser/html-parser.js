@@ -108,10 +108,13 @@ export function parseHTML (html, options) {
         }
 
         // End tag:
+        // 处理结束标签，比如 </div>
         const endTagMatch = html.match(endTag)
         if (endTagMatch) {
           const curIndex = index
+          //截取html，index往前移
           advance(endTagMatch[0].length)
+          //解析结束标签
           parseEndTag(endTagMatch[1], curIndex, index)
           continue
         }
@@ -287,6 +290,8 @@ export function parseHTML (html, options) {
     if (end == null) end = index
 
     // Find the closest opened tag of the same type
+    // 倒序遍历 stack 数组，找到第一个和当前结束标签相同的标签，该标签就是结束标签对应的开始标签的描述对象
+    // 理论上，不出异常，stack 数组中的最后一个元素就是当前结束标签的开始标签的描述对象
     if (tagName) {
       lowerCasedTagName = tagName.toLowerCase()
       for (pos = stack.length - 1; pos >= 0; pos--) {
@@ -299,7 +304,15 @@ export function parseHTML (html, options) {
       pos = 0
     }
 
+    //如果在 stack 中一直没有找到相同的标签名，则 pos 就会 < 0，进行后面的 else 分支
     if (pos >= 0) {
+      // 这个 for 循环负责关闭 stack 数组中索引 >= pos 的所有标签
+      // 为什么要用一个循环，上面说到正常情况下 stack 数组的最后一个元素就是我们要找的开始标签，
+      // 但是有些异常情况，就是有些元素没有给提供结束标签，比如：
+      // 假如当前的stack = ['span', 'div', 'span', 'h1']，当前处理的结束标签 tagName = div
+      // 匹配到 div，pos = 1，那索引为 2 和 3 的两个标签（span、h1）说明就没提供结束标签
+      // 这个 for 循环就负责关闭 div、span 和 h1 这三个标签，
+      // 并在开发环境为 span 和 h1 这两个标签给出 ”未匹配到结束标签的提示”
       // Close all the open elements, up the stack
       for (let i = stack.length - 1; i >= pos; i--) {
         if (process.env.NODE_ENV !== 'production' &&
@@ -312,13 +325,14 @@ export function parseHTML (html, options) {
           )
         }
         if (options.end) {
+          //调用end钩子韩素end("div",start,end)
           options.end(stack[i].tag, start, end)
         }
       }
 
       // Remove the open elements from the stack
-      stack.length = pos
-      lastTag = pos && stack[pos - 1].tag
+      stack.length = pos//stack = ['span']
+      lastTag = pos && stack[pos - 1].tag //span
     } else if (lowerCasedTagName === 'br') {
       if (options.start) {
         options.start(tagName, [], true, start, end)

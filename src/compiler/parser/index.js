@@ -358,13 +358,22 @@ export function parse (
     },
 
     end (tag, start, end) {
+      //记录statck的最后一个ast元素，及结束标签对应的ast元素
       const element = stack[stack.length - 1]
       // pop stack
+      //因为已经处理到结束标签了，所以对应的ast元素已经处理完，栈长度-1
       stack.length -= 1
+      //更新当前的父元素：就是当前栈的最后一个ast元素
       currentParent = stack[stack.length - 1]
       if (process.env.NODE_ENV !== 'production' && options.outputSourceRange) {
         element.end = end
       }
+      /**
+       * 主要做了 3 件事：
+       *   1、如果元素没有被处理过，即 el.processed 为 false，则调用 processElement 方法处理节点上的众多属性
+       *   2、让自己和父元素产生关系，将自己放到父元素的 children 数组中，并设置自己的 parent 属性为 currentParent
+       *   3、设置自己的子元素，将自己所有非插槽的子元素放到自己的 children 数组中
+       */
       closeElement(element)
     },
 
