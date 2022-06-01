@@ -116,17 +116,24 @@ export function parse (
   }
 
   function closeElement (element) {
+    // 移除节点末尾的空格，当前 pre 标签内的元素除外
     trimEndingWhitespace(element)
+    // 当前元素不再 pre 节点内，并且也没有被处理过
     if (!inVPre && !element.processed) {
+      // 分别处理元素节点的 key、ref、插槽、自闭合的 slot 标签、动态组件、class、style、v-bind、v-on、其它指令和一些原生属性 
       element = processElement(element, options)
     }
     // tree management
+    // 处理根节点上存在 v-if、v-else-if、v-else 指令的情况
     if (!stack.length && element !== root) {
       // allow root elements with v-if, v-else-if and v-else
+      //如果根节点存在 v-if 指令，则必须还提供一个具有 v-else-if 或者 v-else 的同级别节点，防止根元素不存在
       if (root.if && (element.elseif || element.else)) {
         if (process.env.NODE_ENV !== 'production') {
+          // 检查根元素
           checkRootConstraints(element)
         }
+        // 给根元素设置 ifConditions 属性，root.ifConditions = [{ exp: element.elseif, block: element }, ...]
         addIfCondition(root, {
           exp: element.elseif,
           block: element
@@ -140,10 +147,13 @@ export function parse (
         )
       }
     }
+    // 让自己和父元素产生关系
+    // 将自己放到父元素的 children 数组中，然后设置自己的 parent 属性为 currentParent
     if (currentParent && !element.forbidden) {
       if (element.elseif || element.else) {
         processIfConditions(element, currentParent)
       } else {
+        //处理插槽的ast
         if (element.slotScope) {
           // scoped slot
           // keep it in the children list so that v-else(-if) conditions can
@@ -158,11 +168,14 @@ export function parse (
 
     // final children cleanup
     // filter out scoped slots
+    // 设置自己的子元素
+    // 将自己的所有非插槽的子元素设置到 element.children 数组中
     element.children = element.children.filter(c => !(c: any).slotScope)
     // remove trailing whitespace node again
     trimEndingWhitespace(element)
 
     // check pre state
+    //重置inVPre
     if (element.pre) {
       inVPre = false
     }
@@ -170,12 +183,15 @@ export function parse (
       inPre = false
     }
     // apply post-transforms
+    // 分别为 element 执行 model、class、style 三个模块的 postTransform 方法
+    // 但是 web 平台没有提供该方法
     for (let i = 0; i < postTransforms.length; i++) {
       postTransforms[i](element, options)
     }
   }
 
   function trimEndingWhitespace (el) {
+    //删除元素中空白的文本节点，比如：<div> </div>，删除 div 元素中的空白节点，将其从元素的 children 属性中移出去
     // remove trailing whitespace node
     if (!inPre) {
       let lastNode

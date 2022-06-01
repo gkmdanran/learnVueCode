@@ -8,7 +8,6 @@ const Astelement = {
     rawAttrsMap: {
         name: { name: 'name', value: '222', start: 5, end: 15 }
     },
-    parent: undefined,
     //处理标记
     processed: true,
     // v-if="flag===true"
@@ -60,10 +59,10 @@ const Astelement = {
     //processAttr
     hasBindings: true,
     events: {
-        "update:visible": { value: "addVisible=$event", dynamic: undefined, start: 48, end: 74 }
+        "update:visible": { value: "addVisible=$event", dynamic: undefined, start: 48, end: 74 }//对象或数组
     },
     nativeEvents: {
-        "change": { value: "msg=''", dynamic: false, start: 75, end: 98, modifiers: { stop: true } }
+        "change": { value: "msg=''", dynamic: false, start: 75, end: 98, modifiers: { stop: true } }//对象或数组
     },
     props: [
         { name: "value", value: "msg", dynamic: false, start: 62, end: 74 }
@@ -79,5 +78,11 @@ const Astelement = {
         rawName: "v-text",
         start: 26,
         value: "msg"
-    }]
+    }],
+    // v-pre
+    pre: true,
+    // v-once
+    once: true,
+    parent:"parentAST",
+    children: [],
 }
