@@ -95,14 +95,18 @@ export function addHandler (
   // normalize click.right and click.middle since they don't actually fire
   // this is technically browser-specific, but at least for now browsers are
   // the only target envs that have right/middle clicks.
+  // 处理click.right
   if (modifiers.right) {
+    //动态属性需要判断是否是click
     if (dynamic) {
       name = `(${name})==='click'?'contextmenu':(${name})`
     } else if (name === 'click') {
       name = 'contextmenu'
       delete modifiers.right
     }
+  //处理click.middle
   } else if (modifiers.middle) {
+    //动态属性需要判断是否是click
     if (dynamic) {
       name = `(${name})==='click'?'mouseup':(${name})`
     } else if (name === 'click') {
@@ -111,29 +115,37 @@ export function addHandler (
   }
 
   // check capture modifier
+  /**
+   * 处理 capture、once、passive 这三个修饰符，通过给 name 添加不同的标记来标记这些修饰符
+   */
   if (modifiers.capture) {
     delete modifiers.capture
+    // 给带有 capture 修饰符的属性，加上 ! 标记
     name = prependModifierMarker('!', name, dynamic)
   }
   if (modifiers.once) {
     delete modifiers.once
+    // once 修饰符加 ~ 标记
     name = prependModifierMarker('~', name, dynamic)
   }
   /* istanbul ignore if */
   if (modifiers.passive) {
     delete modifiers.passive
+    // passive 修饰符加 & 标记
     name = prependModifierMarker('&', name, dynamic)
   }
 
   let events
   if (modifiers.native) {
     delete modifiers.native
+    // native 修饰符， 监听组件根元素的原生事件，将事件信息存放到 el.nativeEvents 对象中
     events = el.nativeEvents || (el.nativeEvents = {})
   } else {
     events = el.events || (el.events = {})
   }
 
   const newHandler: any = rangeSetItem({ value: value.trim(), dynamic }, range)
+  // 说明有修饰符，将修饰符对象放到 newHandler 对象上
   if (modifiers !== emptyObject) {
     newHandler.modifiers = modifiers
   }
@@ -141,8 +153,10 @@ export function addHandler (
   const handlers = events[name]
   /* istanbul ignore if */
   if (Array.isArray(handlers)) {
+    //如果事件名对应的是一个数组，则会根据权重来添加在数组头还是尾
     important ? handlers.unshift(newHandler) : handlers.push(newHandler)
   } else if (handlers) {
+    //如果事件名对应的值原来就存在且是对象，则根据权重合并成数组
     events[name] = important ? [newHandler, handlers] : [handlers, newHandler]
   } else {
     //el.events上添加对应的事件

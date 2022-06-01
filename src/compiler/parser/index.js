@@ -190,6 +190,7 @@ export function parse (
   }
 
   function checkRootConstraints (el) {
+     // 不能使用 slot 和 template 标签作为组件的根元素
     if (el.tag === 'slot' || el.tag === 'template') {
       warnOnce(
         `Cannot use <${el.tag}> as component root element because it may ` +
@@ -197,6 +198,7 @@ export function parse (
         { start: el.start }
       )
     }
+    // 不能在有状态组件的 根元素 上使用 v-for，因为它会渲染出多个元素
     if (el.attrsMap.hasOwnProperty('v-for')) {
       warnOnce(
         'Cannot use v-for on stateful component root element because ' +
@@ -282,34 +284,58 @@ export function parse (
       }
 
       if (!inVPre) {
+        // 表示 element 是否存在 v-pre 指令，存在则设置 element.pre = true
         processPre(element)
         if (element.pre) {
+           // 存在 v-pre 指令，则设置 inVPre 为 true
           inVPre = true
         }
       }
+      // 如果 pre 标签，则设置 inPre 为 true
       if (platformIsPreTag(element.tag)) {
         inPre = true
       }
+      //说明标签上存在 v-pre 指令，这样的节点只会渲染一次，将节点上的属性都设置到 el.attrs 数组对象中，作为静态属性，数据更新时不会渲染这部分内容
+      // 设置 el.attrs 数组对象，每个元素都是一个属性对象 { name: attrName, value: attrVal, start, end }
       if (inVPre) {
         processRawAttrs(element)
-      } else if (!element.processed) {
+      } else if (!element.processed) { //元素未被处理过
         // structural directives
+        // 处理 v-for 属性，得到 element.for = 可迭代对象 element.alias = 别名
         processFor(element)
+         /**
+         * 处理 v-if、v-else-if、v-else
+         * 得到 element.if = "exp"，element.elseif = exp, element.else = true
+         * v-if 属性会额外在 element.ifConditions 数组中添加 { exp, block } 对象
+         */
         processIf(element)
+        // 处理 v-once 指令，得到 element.once = true 
         processOnce(element)
       }
-
+      // 如果 root 不存在
       if (!root) {
+        //则表示当前处理的元素为第一个元素，即组件的 根 元素
         root = element
         if (process.env.NODE_ENV !== 'production') {
+          // 检查根元素，对根元素有一些限制，比如：不能使用 slot 和 template 作为根元素，也不能在有状态组件的根元素上使用 v-for 指令
           checkRootConstraints(root)
         }
       }
 
       if (!unary) {
+        // 非自闭合标签，通过 currentParent 记录当前元素，下一个元素在处理的时候，就知道自己的父元素是谁
         currentParent = element
+        // 然后将 element push 到 stack 数组，将来处理到当前元素的闭合标签时再拿出来
+        // 将当前标签的 ast 对象 push 到 stack 数组中，这里需要注意，在调用 options.start 方法
+        // 之前也发生过一次 push 操作，那个 push 进来的是当前标签的一个基本配置信息
         stack.push(element)
       } else {
+        /**
+         * 说明当前元素为自闭合标签，主要做了 3 件事：
+         *   1、如果元素没有被处理过，即 el.processed 为 false，则调用 processElement 方法处理节点上的众多属性
+         *   2、让自己和父元素产生关系，将自己放到父元素的 children 数组中，并设置自己的 parent 属性为 currentParent
+         *   3、设置自己的子元素，将自己所有非插槽的子元素放到自己的 children 数组中
+         */
         closeElement(element)
       }
     },
@@ -417,12 +443,15 @@ export function parse (
 }
 
 function processPre (el) {
+  //从attrsMap上获取v-pre的值，并且从attrsList中移除v-pre
+  //如果元素上存在 v-pre 指令，则设置 el.pre = true 
   if (getAndRemoveAttr(el, 'v-pre') != null) {
     el.pre = true
   }
 }
 
 function processRawAttrs (el) {
+  //将el.attrsList中所有的属性都添加到el.attrs
   const list = el.attrsList
   const len = list.length
   if (len) {
@@ -571,17 +600,21 @@ export function parseFor (exp: string): ?ForParseResult {
 }
 
 function processIf (el) {
+  //从attrsMap上获取v-if的值，并且从attrsList中移除v-if
   const exp = getAndRemoveAttr(el, 'v-if')
   if (exp) {
     el.if = exp
+    // 在 el.ifConditions 数组中添加 { exp, block }
     addIfCondition(el, {
       exp: exp,
       block: el
     })
   } else {
+    //从attrsMap上获取v-else的值，并且从attrsList中移除v-else
     if (getAndRemoveAttr(el, 'v-else') != null) {
       el.else = true
     }
+    //从attrsMap上获取v-else-if的值，并且从attrsList中移除v-else-if
     const elseif = getAndRemoveAttr(el, 'v-else-if')
     if (elseif) {
       el.elseif = elseif
@@ -632,6 +665,7 @@ export function addIfCondition (el: ASTElement, condition: ASTIfCondition) {
 }
 
 function processOnce (el) {
+  //从attrsMap上获取v-once的值，并且从attrsList中移除v-once
   const once = getAndRemoveAttr(el, 'v-once')
   if (once != null) {
     el.once = true
