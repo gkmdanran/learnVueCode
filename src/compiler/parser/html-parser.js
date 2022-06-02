@@ -134,8 +134,19 @@ export function parseHTML (html, options) {
       }
 
       let text, rest, next
+      // 能走到这儿，说明虽然在 html 中匹配到到了 <xx，但是这不属于上述几种情况，
+      // 它就只是一个普通的一段文本：<我是文本
+      // 于是从 html 中找到下一个 <，直到 <xx 是上述几种情况的标签，则结束，
+      // 在这整个过程中一直在调整 textEnd 的值，作为 html 中下一个有效标签的开始位置
+      // 例如 <span style="height:200px">3232<222</span>
+      // textEnd：4
       if (textEnd >= 0) {
+        // html：3232<222</span>
         rest = html.slice(textEnd)
+        // rest：<222</span>
+        // 这个 while 循环就是处理 <xx 之后的纯文本情况
+        // 截取文本内容，并找到有效标签的开始位置（textEnd）
+        // 这里会循环寻找 < ,看 < 之后是否是有效标签。循环直到找不到 < , 或者找到有效标签，那就根据textEnd来截取文本。
         while (
           !endTag.test(rest) &&
           !startTagOpen.test(rest) &&
@@ -143,22 +154,28 @@ export function parseHTML (html, options) {
           !conditionalComment.test(rest)
         ) {
           // < in plain text, be forgiving and treat it as text
+          //认为 < 后面的内容为纯文本，然后在这些纯文本中再次找 <
           next = rest.indexOf('<', 1)
+          // 如果没找到 <，则直接结束循环
           if (next < 0) break
+          // 走到这儿说明在后续的字符串中找到了 <，索引位置为 textEnd
           textEnd += next
+          // 截取 html 字符串模版 textEnd 之后的内容赋值给 rest，继续判断之后的字符串是否存在标签
           rest = html.slice(textEnd)
         }
+        //截取文本
         text = html.substring(0, textEnd)
       }
-
+      // 如果 textEnd < 0，说明 html 中就没找到 <，那说明 html 就是一段文本
       if (textEnd < 0) {
         text = html
       }
-
+      // 将文本内容从 html 模版字符串上截取掉
       if (text) {
         advance(text.length)
       }
-
+      // 处理文本：调用chars钩子函数生成ast，
+      // 基于文本生成 ast 对象，然后将该 ast 放到它的父元素的children 数组中
       if (options.chars && text) {
         options.chars(text, index - text.length, index)
       }

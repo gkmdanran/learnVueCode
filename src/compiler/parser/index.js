@@ -378,6 +378,7 @@ export function parse (
     },
 
     chars (text: string, start: number, end: number) {
+      // 异常处理，currentParent 不存在说明这段文本没有父元素
       if (!currentParent) {
         if (process.env.NODE_ENV !== 'production') {
           if (text === template) {
@@ -402,13 +403,20 @@ export function parse (
       ) {
         return
       }
+      // 当前父元素的所有孩子节点
       const children = currentParent.children
+      // 对 text 进行一系列的处理，比如删除空白字符，或者存在 whitespaceOptions 选项，则 text 直接置为空或者空格
+      // 文本在 pre 标签内 或者 text.trim() 不为空
       if (inPre || text.trim()) {
+        //判断父元素是否是script或style标签
         text = isTextTag(currentParent) ? text : decodeHTMLCached(text)
       } else if (!children.length) {
+        // 说明文本不在 pre 标签内而且 text.trim() 为空，而且当前父元素也没有孩子节点，
         // remove the whitespace-only node right after an opening tag
+        // 则将 text 置为空
         text = ''
       } else if (whitespaceOption) {
+         // 压缩处理
         if (whitespaceOption === 'condense') {
           // in condense mode, remove the whitespace node if it contains
           // line break, otherwise condense to a single space
@@ -419,7 +427,9 @@ export function parse (
       } else {
         text = preserveWhitespace ? ' ' : ''
       }
+      // 如果经过处理后 text 还存在
       if (text) {
+        // 不在 pre 节点中，并且配置选项中存在压缩选项，则将多个连续空格压缩为单个
         if (!inPre && whitespaceOption === 'condense') {
           // condense consecutive whitespaces into single space
           text = text.replace(whitespaceRE, ' ')
@@ -427,18 +437,22 @@ export function parse (
         let res
         let child: ?ASTNode
         if (!inVPre && text !== ' ' && (res = parseText(text, delimiters))) {
+          // 文本中存在表达式（即有界定符）
+          //3232<222{{msg}}
           child = {
             type: 2,
-            expression: res.expression,
-            tokens: res.tokens,
-            text
+            expression: res.expression, //  \"3232<222\"+_s(msg)
+            tokens: res.tokens,  //["3232<222",{@binding: "msg"}]
+            text   //3232<222{{msg}}
           }
         } else if (text !== ' ' || !children.length || children[children.length - 1].text !== ' ') {
+           // 纯文本节点
           child = {
             type: 3,
             text
           }
         }
+        // child 存在，则将 child 放到父元素的children 数组中
         if (child) {
           if (process.env.NODE_ENV !== 'production' && options.outputSourceRange) {
             child.start = start
