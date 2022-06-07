@@ -93,8 +93,17 @@ export function genElement (el: ASTElement, state: CodegenState): string {
      */
     return genIf(el, state)
   } else if (el.tag === 'template' && !el.slotTarget && !state.pre) {
+     /**
+     * 当前节点是 template 标签并且不是插槽和带有 v-pre 指令
+     * 生成所有子节点的渲染函数，返回一个数组，格式如：
+     * [_c(tag, data, children, normalizationType), ...] 
+     */
     return genChildren(el, state) || 'void 0'
   } else if (el.tag === 'slot') {
+    /**
+     * 生成插槽的渲染函数，得到
+     * _t(slotName, children, attrs, bind)
+     */
     return genSlot(el, state)
   } else {
     // component or element
@@ -106,8 +115,11 @@ export function genElement (el: ASTElement, state: CodegenState): string {
        */
       code = genComponent(el.component, el, state)
     } else {
+      // 自定义组件和原生标签走这里
       let data
       if (!el.plain || (el.pre && state.maybeComponent(el))) {
+        // 非普通元素或者带有 v-pre 指令的组件走这里，处理节点的所有属性，返回一个 JSON 字符串，
+        // 比如 '{ key: xx, ref: xx, ... }'
         data = genData(el, state)
       }
 
@@ -274,6 +286,7 @@ export function genData (el: ASTElement, state: CodegenState): string {
 
   // directives first.
   // directives may mutate the el's other properties before they are generated.
+  // 首先先处理指令，因为指令可能在生成其它属性之前改变这些属性
   const dirs = genDirectives(el, state)
   if (dirs) data += dirs + ','
 
@@ -297,21 +310,27 @@ export function genData (el: ASTElement, state: CodegenState): string {
     data += `tag:"${el.tag}",`
   }
   // module data generation functions
+  // 为节点执行模块(class、style)的 genData 方法，
+  // 得到 data = { staticClass: xx, class: xx, staticStyle: xx, style: xx }
   for (let i = 0; i < state.dataGenFns.length; i++) {
     data += state.dataGenFns[i](el)
   }
   // attributes
+  //处理attrs
   if (el.attrs) {
     data += `attrs:${genProps(el.attrs)},`
   }
   // DOM props
+  //处理props
   if (el.props) {
     data += `domProps:${genProps(el.props)},`
   }
   // event handlers
+  //处理事件
   if (el.events) {
     data += `${genHandlers(el.events, false)},`
   }
+  //处理native事件
   if (el.nativeEvents) {
     data += `${genHandlers(el.nativeEvents, true)},`
   }
@@ -321,10 +340,13 @@ export function genData (el: ASTElement, state: CodegenState): string {
     data += `slot:${el.slotTarget},`
   }
   // scoped slots
+  // scoped slots，作用域插槽，data = { scopedSlots: '_u(xxx)' }
   if (el.scopedSlots) {
     data += `${genScopedSlots(el, el.scopedSlots, state)},`
   }
   // component v-model
+  // 处理 v-model 属性，得到
+  // data = { model: { value, callback, expression } }
   if (el.model) {
     data += `model:{value:${
       el.model.value
@@ -336,16 +358,20 @@ export function genData (el: ASTElement, state: CodegenState): string {
   }
   // inline-template
   if (el.inlineTemplate) {
+    // inline-template，处理内联模版，得到
+    // data = { inlineTemplate: { render: function() { render 函数 }, staticRenderFns: [ function() {}, ... ] } }
     const inlineTemplate = genInlineTemplate(el, state)
     if (inlineTemplate) {
       data += `${inlineTemplate},`
     }
   }
+  // 删掉 JSON 字符串最后的 逗号，然后加上闭合括号 }
   data = data.replace(/,$/, '') + '}'
   // v-bind dynamic argument wrap
   // v-bind with dynamic arguments must be applied using the same v-bind object
   // merge helper so that class/style/mustUseProp attrs are handled correctly.
   if (el.dynamicAttrs) {
+    // 存在动态属性，data = `_b(data, tag, 静态属性字符串或者_d(静态属性字符串, 动态属性字符串))`
     data = `_b(${data},"${el.tag}",${genProps(el.dynamicAttrs)})`
   }
   // v-bind data wrap
@@ -360,22 +386,28 @@ export function genData (el: ASTElement, state: CodegenState): string {
 }
 
 function genDirectives (el: ASTElement, state: CodegenState): string | void {
+  // 获取指令数组
   const dirs = el.directives
   if (!dirs) return
   let res = 'directives:['
+  // 标记，用于标记指令是否需要在运行时完成的任务，比如 v-model 的 input 事件
   let hasRuntime = false
   let i, l, dir, needRuntime
   for (i = 0, l = dirs.length; i < l; i++) {
     dir = dirs[i]
     needRuntime = true
+    // 获取节点当前指令的处理方法
     const gen: DirectiveFunction = state.directives[dir.name]
     if (gen) {
       // compile-time directive that manipulates AST.
       // returns true if it also needs a runtime counterpart.
+      // 执行指令的编译方法，如果指令还需要运行时完成一部分任务，则返回 true，比如 v-model
       needRuntime = !!gen(el, dir, state.warn)
     }
     if (needRuntime) {
+      // 表示该指令在运行时还有任务
       hasRuntime = true
+      // res = directives:[{ name, rawName, value, arg, modifiers }, ...]
       res += `{name:"${dir.name}",rawName:"${dir.rawName}"${
         dir.value ? `,value:(${dir.value}),expression:${JSON.stringify(dir.value)}` : ''
       }${
@@ -386,6 +418,7 @@ function genDirectives (el: ASTElement, state: CodegenState): string | void {
     }
   }
   if (hasRuntime) {
+    //只有指令存在运行时任务时，才会返回 res
     return res.slice(0, -1) + ']'
   }
 }
@@ -522,8 +555,11 @@ export function genChildren (
 ): string | void {
   const children = el.children
   if (children.length) {
+    // 获取第一个子节点
     const el: any = children[0]
     // optimize single v-for
+    // 优化，只有一个子节点 && 子节点的上有 v-for 指令 && 子节点的标签不为 template 或者 slot
+    // 优化的方式是直接调用 genElement 生成该节点的渲染函数，不需要走下面的循环然后调用 genCode 最后得到渲染函数
     if (children.length === 1 &&
       el.for &&
       el.tag !== 'template' &&
@@ -538,6 +574,8 @@ export function genChildren (
       ? getNormalizationType(children, state.maybeComponent)
       : 0
     const gen = altGenNode || genNode
+    // 返回一个数组，数组的每个元素都是一个子节点的渲染函数，
+    // 格式：['_c(tag, data, children, normalizationType)', ...]
     return `[${children.map(c => gen(c, state)).join(',')}]${
       normalizationType ? `,${normalizationType}` : ''
     }`
@@ -577,10 +615,13 @@ function needsNormalization (el: ASTElement): boolean {
 
 function genNode (node: ASTNode, state: CodegenState): string {
   if (node.type === 1) {
+    //元素节点
     return genElement(node, state)
   } else if (node.type === 3 && node.isComment) {
+    //注释
     return genComment(node)
   } else {
+    //文本
     return genText(node)
   }
 }
@@ -597,8 +638,11 @@ export function genComment (comment: ASTText): string {
 }
 
 function genSlot (el: ASTElement, state: CodegenState): string {
+  //插槽名
   const slotName = el.slotName || '"default"'
+  // 生成所有的子节点
   const children = genChildren(el, state)
+  // 结果字符串，_t(slotName, children, attrs, bind)
   let res = `_t(${slotName}${children ? `,function(){return ${children}}` : ''}`
   const attrs = el.attrs || el.dynamicAttrs
     ? genProps((el.attrs || []).concat(el.dynamicAttrs || []).map(attr => ({
@@ -645,15 +689,20 @@ function genProps (props: Array<ASTAttr>): string {
       ? generateValue(prop.value)
       : transformSpecialNewlines(prop.value)
     if (prop.dynamic) {
+      //动态属性拼接
       dynamicProps += `${prop.name},${value},`
     } else {
+      //静态属性拼接
       staticProps += `"${prop.name}":${value},`
     }
   }
+  // 去掉静态属性最后的逗号：{name1:value1,name2:value2}
   staticProps = `{${staticProps.slice(0, -1)}}`
   if (dynamicProps) {
+    //存在动态属性返回：_d(静态属性字符串，动态属性字符串)
     return `_d(${staticProps},[${dynamicProps.slice(0, -1)}])`
   } else {
+    // 说明属性数组中不存在动态属性，直接返回静态属性字符串
     return staticProps
   }
 }
