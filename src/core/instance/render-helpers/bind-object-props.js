@@ -28,6 +28,7 @@ export function bindObjectProps (
         this
       )
     } else {
+      //数组转对象
       if (Array.isArray(value)) {
         value = toObject(value)
       }

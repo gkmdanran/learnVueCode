@@ -9,10 +9,11 @@ export function renderStatic (
 ): VNode | Array<VNode> {
   //缓存
   const cached = this._staticTrees || (this._staticTrees = [])
-  //获取缓存
+  // 缓存，静态节点第二次被渲染时就从缓存中直接获取已缓存的 VNode
   let tree = cached[index]
   // if has already-rendered static tree and not inside v-for,
   // we can reuse the same tree.
+  // 如果当前静态树已经被渲染过一次（即有缓存）而且没有被包裹在 v-for 指令所在节点的内部，则直接返回缓存的 VNode
   if (tree && !isInFor) {
     return tree
   }
@@ -23,7 +24,7 @@ export function renderStatic (
     null,
     this // for render fns generated for functional component templates
   )
-  //打上静态标记
+  //打上静态标记，即添加 { isStatic: true, key: `__static__${index}`, isOnce: false }
   markStatic(tree, `__static__${index}`, false)
   return tree
 }

@@ -31,6 +31,7 @@ export function installRenderHelpers (target: any) {
    *   2、为静态树的 VNode 打静态标记
    */
   target._m = renderStatic
+  //解析得到过滤器
   target._f = resolveFilter
   target._k = checkKeyCodes
   target._b = bindObjectProps
@@ -40,6 +41,8 @@ export function installRenderHelpers (target: any) {
   target._e = createEmptyVNode
   target._u = resolveScopedSlots
   target._g = bindObjectListeners
+  //处理动态属性
   target._d = bindDynamicKeys
+  //capture、once、passive事件修饰添加标记
   target._p = prependModifier
 }
