@@ -14,16 +14,21 @@ export function renderList (
   ) => VNode
 ): ?Array<VNode> {
   let ret: ?Array<VNode>, i, l, keys, key
+  //v-for循环的是个数组或这字符串
   if (Array.isArray(val) || typeof val === 'string') {
     ret = new Array(val.length)
+    //循环数组或者字符串
     for (i = 0, l = val.length; i < l; i++) {
+      //每一项都生成vnode，形成一个vnode数组
       ret[i] = render(val[i], i)
     }
+  //v-for循环数字
   } else if (typeof val === 'number') {
     ret = new Array(val)
     for (i = 0; i < val; i++) {
       ret[i] = render(i + 1, i)
     }
+  //v-for循环对象
   } else if (isObject(val)) {
     if (hasSymbol && val[Symbol.iterator]) {
       ret = []
