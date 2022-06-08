@@ -24,6 +24,7 @@ export function extractPropsFromVNodeData (
   const res = {}
   const { attrs, props } = data
   if (isDef(attrs) || isDef(props)) {
+    // 以组件 props 配置中的属性为 key，父组件传递下来的值为 value
     for (const key in propOptions) {
       const altKey = hyphenate(key)
       if (process.env.NODE_ENV !== 'production') {
@@ -56,6 +57,8 @@ function checkProp (
   altKey: string,
   preserve: boolean
 ): boolean {
+  // 判断 hash（props/attrs）对象中是否存在 key 或 altKey
+  // 存在则设置给 res => res[key] = hash[key]
   if (isDef(hash)) {
     if (hasOwn(hash, key)) {
       res[key] = hash[key]
