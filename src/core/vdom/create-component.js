@@ -33,7 +33,9 @@ import {
 } from 'weex/runtime/recycle-list/render-component-template'
 
 // inline hooks to be invoked on component VNodes during patch
+// patch 期间在组件 vnode 上调用内联钩子
 const componentVNodeHooks = {
+   // 初始化
   init (vnode: VNodeWithData, hydrating: boolean): ?boolean {
     if (
       vnode.componentInstance &&
@@ -41,20 +43,27 @@ const componentVNodeHooks = {
       vnode.data.keepAlive
     ) {
       // kept-alive components, treat as a patch
+      // 被 keep-alive 包裹的组件
       const mountedNode: any = vnode // work around flow
       componentVNodeHooks.prepatch(mountedNode, mountedNode)
     } else {
+      // 创建组实例，执行_init方法
       const child = vnode.componentInstance = createComponentInstanceForVnode(
         vnode,
         activeInstance
       )
+      //组件实例进行挂载
       child.$mount(hydrating ? vnode.elm : undefined, hydrating)
     }
   },
 
+  // 更新 VNode，用新的 VNode 配置更新旧的 VNode 上的各种属性
   prepatch (oldVnode: MountedComponentVNode, vnode: MountedComponentVNode) {
+    // 新 VNode 的组件配置项
     const options = vnode.componentOptions
+    // 老 VNode 的组件实例
     const child = vnode.componentInstance = oldVnode.componentInstance
+     // 用 新vnode 上的属性更新 child 上的各种属性
     updateChildComponent(
       child,
       options.propsData, // updated props
@@ -66,10 +75,12 @@ const componentVNodeHooks = {
 
   insert (vnode: MountedComponentVNode) {
     const { context, componentInstance } = vnode
+    // 如果组件未挂载，则调用 mounted 声明周期钩子
     if (!componentInstance._isMounted) {
       componentInstance._isMounted = true
       callHook(componentInstance, 'mounted')
     }
+    // 处理 keep-alive 组件的异常情况
     if (vnode.data.keepAlive) {
       if (context._isMounted) {
         // vue-router#1212
@@ -85,11 +96,14 @@ const componentVNodeHooks = {
   },
 
   destroy (vnode: MountedComponentVNode) {
+    // 获取组件实例
     const { componentInstance } = vnode
     if (!componentInstance._isDestroyed) {
       if (!vnode.data.keepAlive) {
+        //不被keep-alive销毁，则直接调用 $destroy 方法销毁组件
         componentInstance.$destroy()
       } else {
+        // 负责让组件失活，不销毁组件实例，从而缓存组件的状态
         deactivateChildComponent(componentInstance, true /* direct */)
       }
     }
@@ -113,7 +127,7 @@ export function createComponent (
   const baseCtor = context.$options._base
 
   // plain options object: turn it into a constructor
-  // 当 Ctor 为配置对象时，通过 Vue.extend 将其转为构造函数
+  // 当 Ctor 为配置对象时，通过 Vue.extend 将其转为构造函数sub
   if (isObject(Ctor)) {
     Ctor = baseCtor.extend(Ctor)
   }
@@ -209,7 +223,7 @@ export function createComponent (
   const vnode = new VNode(
     `vue-component-${Ctor.cid}${name ? `-${name}` : ''}`,
     data, undefined, undefined, undefined, context,
-    { Ctor, propsData, listeners, tag, children },
+    { Ctor, propsData, listeners, tag, children },   //vnode.componentOptions
     asyncFactory
   )
 
@@ -236,20 +250,28 @@ export function createComponentInstanceForVnode (
     parent
   }
   // check inline-template render functions
+  // 检查内联模版渲染函数
   const inlineTemplate = vnode.data.inlineTemplate
   if (isDef(inlineTemplate)) {
     options.render = inlineTemplate.render
     options.staticRenderFns = inlineTemplate.staticRenderFns
   }
+  // vnode.componentOptions.Ctor就是通过Vue.extend创建的组件构造函数sub，new 的时候会创建一个组件实例，并执行vue实例的_init方法
   return new vnode.componentOptions.Ctor(options)
 }
 
 function installComponentHooks (data: VNodeData) {
+  //在组件data上设置hook对象
   const hooks = data.hook || (data.hook = {})
+  // 遍历 hooksToMerge 数组，hooksToMerge = ['init', 'prepatch', 'insert' 'destroy']
   for (let i = 0; i < hooksToMerge.length; i++) {
+    // 比如 key = init
     const key = hooksToMerge[i]
+     // 从 data.hook 对象中获取 key 对应的方法
     const existing = hooks[key]
+    // componentVNodeHooks 对象中 key 对象的方法
     const toMerge = componentVNodeHooks[key]
+    // 合并用户传递的 hook 方法和框架自带的 hook 方法，其实就是分别执行两个方法
     if (existing !== toMerge && !(existing && existing._merged)) {
       hooks[key] = existing ? mergeHook(toMerge, existing) : toMerge
     }
@@ -257,11 +279,13 @@ function installComponentHooks (data: VNodeData) {
 }
 
 function mergeHook (f1: any, f2: any): Function {
+  //将两个函数合并成一个函数，合并后的函数就是内部分别调用这两个函数
   const merged = (a, b) => {
     // flow complains about extra args which is why we use any
     f1(a, b)
     f2(a, b)
   }
+  //已合并标记
   merged._merged = true
   return merged
 }
