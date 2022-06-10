@@ -75,8 +75,10 @@ export function initMixin (Vue: Class<Component>) {
 }
 
 export function initInternalComponent (vm: Component, options: InternalComponentOptions) {
+  //基于原来组件的构造函数上的options创建一个opts对象
   const opts = vm.$options = Object.create(vm.constructor.options)
   // doing this because it's faster than dynamic enumeration.
+  // 组件调用_init时也会传入{_isComponent: true,_parentVnode: vnode,parent}作为options
   const parentVnode = options._parentVnode
   opts.parent = options.parent
   opts._parentVnode = parentVnode

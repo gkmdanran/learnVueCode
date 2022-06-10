@@ -33,6 +33,7 @@ export function createElement (
   normalizationType: any,
   alwaysNormalize: boolean
 ): VNode | Array<VNode> {
+  //如果data不是一个对象，那么data对应的参数实际是children
   if (Array.isArray(data) || isPrimitive(data)) {
     normalizationType = children
     children = data
@@ -60,10 +61,11 @@ export function _createElement (
       'Always create fresh vnode data objects in each render!',
       context
     )
+    //返回一个空的vnode
     return createEmptyVNode()
   }
   // object syntax in v-bind
-  //动态组件处理
+  //动态组件处理 <component is="xxx"/>,is属性值作为tag
   if (isDef(data) && isDef(data.is)) {
     tag = data.is
   }
@@ -93,7 +95,7 @@ export function _createElement (
     data.scopedSlots = { default: children[0] }
     children.length = 0
   }
-  // 将子元素进行标准化处理
+  // 将子元素进行标准化处理，处理成vnode类型
   if (normalizationType === ALWAYS_NORMALIZE) {
     //用户定义的，规范成vnode
     children = normalizeChildren(children)

@@ -178,6 +178,7 @@ export function createComponent (
   // extract props
   // 提取 props 数据，得到 propsData 对象，propsData[key] = val
   // 以组件 props 配置中的属性为 key，父组件中对应的数据为 value
+  //获得组件传递的props <cmp:id="1" :name="2"/>  {id:1,name:2}
   const propsData = extractPropsFromVNodeData(data, Ctor, tag)
 
   // functional component
@@ -223,7 +224,7 @@ export function createComponent (
   const vnode = new VNode(
     `vue-component-${Ctor.cid}${name ? `-${name}` : ''}`,
     data, undefined, undefined, undefined, context,
-    { Ctor, propsData, listeners, tag, children },   //vnode.componentOptions
+    { Ctor, propsData, listeners, tag, children },   //vnode.componentOptions: Ctor:组件构造函数，propsData:组件上的props，listeners:组件上没有.native修饰符的事件
     asyncFactory
   )
 
@@ -293,9 +294,10 @@ function mergeHook (f1: any, f2: any): Function {
 // transform component v-model info (value and callback) into
 // prop and event handler respectively.
 function transformModel (options, data: any) {
+  //如果options没传递model去自定义v-model，那默认就是props是value，事件是input
   const prop = (options.model && options.model.prop) || 'value'
   const event = (options.model && options.model.event) || 'input'
-  ;(data.attrs || (data.attrs = {}))[prop] = data.model.value
+  ;(data.attrs || (data.attrs = {}))[prop] = data.model.value   //attrs添加对应的props
   const on = data.on || (data.on = {})
   const existing = on[event]
   const callback = data.model.callback
@@ -305,9 +307,11 @@ function transformModel (options, data: any) {
         ? existing.indexOf(callback) === -1
         : existing !== callback
     ) {
+      //之前已经存在事件了，就拼接成一个数组
       on[event] = [callback].concat(existing)
     }
   } else {
+    //否则直接添加事件及对应的函数
     on[event] = callback
   }
 }
