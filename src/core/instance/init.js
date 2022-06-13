@@ -38,6 +38,10 @@ export function initMixin (Vue: Class<Component>) {
     } else {
       //Vue根走这里
       //将用户new Vue()时传入的options和Vue构造函数上的options合并，然后添加到实例的$options上
+      //组件选项合并主要发生在以下三个地方
+      //1.Vue.component(CompName,Comp)，做了选项合并，合并的Vue内置的全局组件和用户自己注册的全局组件，最终都会放到全局的components选项中
+      //2.{components:{xxx}},局部注册组件，执行编译器生成render函数时做了选项合并，会合并全局配置项到组建局部配置上
+      //3.这里的根组件情况
       vm.$options = mergeOptions(
         resolveConstructorOptions(vm.constructor),
         options || {},
@@ -99,18 +103,25 @@ export function resolveConstructorOptions (Ctor: Class<Component>) {
   let options = Ctor.options
   //根不存在super，则直接获取构造函数的options返回
   if (Ctor.super) {
+    //存在父类，递归解析父类构造函数的选项
     const superOptions = resolveConstructorOptions(Ctor.super)
+    //获得原来父类选项
     const cachedSuperOptions = Ctor.superOptions
+    //进行比较
     if (superOptions !== cachedSuperOptions) {
       // super option changed,
       // need to resolve new options.
+      //如果不相同，则说明父类构造函数选项已经发生改变，需要重新设置
       Ctor.superOptions = superOptions
       // check if there are any late-modified/attached options (#4976)
+      // 检查 Ctor.options 上是否有任何后期修改/附加的选项
       const modifiedOptions = resolveModifiedOptions(Ctor)
       // update base extend options
+      // 如果存在被修改或增加的选项，则合并到extendOptions，这个extendOptions就是调用extend时传入的参数option
       if (modifiedOptions) {
         extend(Ctor.extendOptions, modifiedOptions)
       }
+      //再将superOptions和extendOptions合并更新原来子类构造函数的options
       options = Ctor.options = mergeOptions(superOptions, Ctor.extendOptions)
       if (options.name) {
         options.components[options.name] = Ctor
@@ -122,8 +133,11 @@ export function resolveConstructorOptions (Ctor: Class<Component>) {
 
 function resolveModifiedOptions (Ctor: Class<Component>): ?Object {
   let modified
+  //最新的选项
   const latest = Ctor.options
+  //之前密封保存的选项
   const sealed = Ctor.sealedOptions
+  //两者进行比较，找出不同项，返回
   for (const key in latest) {
     if (latest[key] !== sealed[key]) {
       if (!modified) modified = {}
