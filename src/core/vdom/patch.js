@@ -29,7 +29,7 @@ import {
 } from '../util/index'
 
 export const emptyNode = new VNode('', {}, [])
-
+//钩子函数数组
 const hooks = ['create', 'activate', 'update', 'remove', 'destroy']
 
 function sameVnode (a, b) {
@@ -72,7 +72,14 @@ export function createPatchFunction (backend) {
   const cbs = {}
 
   const { modules, nodeOps } = backend
-
+  // cbs={
+  //   'create':[fn1,fn2,...],
+  //   'activate':[fn3,...],
+  //   'update':[fn4,fn5,...],
+  //   'remove':[fn6,fn7,...],
+  //   'destroy':[fn8,...]
+  // }
+  // 将modules中各模块的钩子函数添加到响应的钩子函数数组中，在合适时机调用
   for (i = 0; i < hooks.length; ++i) {
     cbs[hooks[i]] = []
     for (j = 0; j < modules.length; ++j) {
@@ -696,7 +703,12 @@ export function createPatchFunction (backend) {
       return node.nodeType === (vnode.isComment ? 8 : 3)
     }
   }
-
+  /**
+   * vm.__patch__
+   *   1、新节点不存在，老节点存在，调用 destroy，销毁老节点
+   *   2、如果 oldVnode 是真实元素，则表示首次渲染，创建新节点，并插入 body，然后移除老节点
+   *   3、如果 oldVnode 存在并且不是真实元素，则表示更新阶段，执行 patchVnode
+   */
   return function patch (oldVnode, vnode, hydrating, removeOnly) {
     if (isUndef(vnode)) {
       if (isDef(oldVnode)) invokeDestroyHook(oldVnode)
@@ -708,14 +720,19 @@ export function createPatchFunction (backend) {
 
     if (isUndef(oldVnode)) {
       // empty mount (likely as component), create new root element
+      // 新的 VNode 存在，老的 VNode 不存在，这种情况会在一个组件初次渲染的时候出现，比如：
+      // <div id="app"><comp></comp></div>
+      // 这里的 comp 组件初次渲染时就会走这儿
       isInitialPatch = true
       createElm(vnode, insertedVnodeQueue)
     } else {
       const isRealElement = isDef(oldVnode.nodeType)
       if (!isRealElement && sameVnode(oldVnode, vnode)) {
         // patch existing root node
+        // 不是真实元素，但是老节点和新节点是同一个节点，则是更新阶段，执行 patch 更新节点
         patchVnode(oldVnode, vnode, insertedVnodeQueue, null, null, removeOnly)
       } else {
+        // 是真实元素，则表示初次渲染
         if (isRealElement) {
           // mounting to a real element
           // check if this is server-rendered content and if we can perform
@@ -740,11 +757,14 @@ export function createPatchFunction (backend) {
           }
           // either not server-rendered, or hydration failed.
           // create an empty node and replace it
+          // 走到这儿说明不是服务端渲染，或者 hydration 失败，则根据 oldVnode也就是真实元素 创建一个 vnode 节点
           oldVnode = emptyNodeAt(oldVnode)
         }
 
         // replacing existing element
+        // 拿到老节点的真实元素
         const oldElm = oldVnode.elm
+        // 获取老节点的父元素，即 body
         const parentElm = nodeOps.parentNode(oldElm)
 
         // create new node
