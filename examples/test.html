@@ -8,12 +8,11 @@
 
 <body>
     <div id="app">
-        {{ msg }}
-        
+       
     </div>
     <script src="../dist/vue.js"></script>
     <script>
-        Vue.component('cmp', {
+        Vue.component('cmpt', {
             props: {
                 visible: {
                     type: Boolean,
@@ -21,7 +20,7 @@
                 }
             },
             template: `<div>
-                <slot name="test">{{visible}}</slot>
+                123
             </div>`
         })
         new Vue({
@@ -34,14 +33,12 @@
                 },
                 addVisible: true
             },
-            template: `
-            <span style="height:200px">3232<222{{msg}}</span>
-            `
             // template: `
-            // <div style="height:200px">
-            //     <input type="text" :value="msg" @change="msg=''">
-            // </div>
+            // <span style="height:200px">3232<222{{msg}}</span>
             // `
+            template: `
+                <cmpt/>
+            `
         })
 
     </script>
