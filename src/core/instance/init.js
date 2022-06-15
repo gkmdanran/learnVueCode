@@ -84,15 +84,21 @@ export function initInternalComponent (vm: Component, options: InternalComponent
   // doing this because it's faster than dynamic enumeration.
   // 组件调用_init时也会传入{_isComponent: true,_parentVnode: vnode,parent}作为options
   const parentVnode = options._parentVnode
+  //$options.parent
   opts.parent = options.parent
+  //$options._parentVnode=_parentVnode
   opts._parentVnode = parentVnode
 
+  //componentOptions={ Ctor, propsData, listeners, tag, children }
   const vnodeComponentOptions = parentVnode.componentOptions
+  //$options.propsData=propsData
   opts.propsData = vnodeComponentOptions.propsData
+  //$options._parentListeners=listeners
   opts._parentListeners = vnodeComponentOptions.listeners
+  //$options._renderChildren=children
   opts._renderChildren = vnodeComponentOptions.children
+  //$options._componentTag=tag
   opts._componentTag = vnodeComponentOptions.tag
-
   if (options.render) {
     opts.render = options.render
     opts.staticRenderFns = options.staticRenderFns

@@ -43,16 +43,16 @@ const componentVNodeHooks = {
       vnode.data.keepAlive
     ) {
       // kept-alive components, treat as a patch
-      // 被 keep-alive 包裹的组件
+      // 被 keep-alive 包裹的组件会调用prepatch
       const mountedNode: any = vnode // work around flow
       componentVNodeHooks.prepatch(mountedNode, mountedNode)
     } else {
-      // 创建组件实例，执行_init方法
+      // 创建组件实例并添加到vnode.componentInstance上，执行_init方法
       const child = vnode.componentInstance = createComponentInstanceForVnode(
         vnode,
         activeInstance
       )
-      //组件实例进行挂载
+      //组件实例进行挂载，然后会走编译，生成vnode，patch过程
       child.$mount(hydrating ? vnode.elm : undefined, hydrating)
     }
   },
