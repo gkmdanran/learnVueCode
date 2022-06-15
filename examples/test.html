@@ -8,20 +8,30 @@
 
 <body>
     <div id="app">
-       
+
     </div>
     <script src="../dist/vue.js"></script>
     <script>
         Vue.component('cmpt', {
             props: {
-                visible: {
-                    type: Boolean,
-                    default: false
+                loginType: {
+                    default:'username'
                 }
             },
-            template: `<div>
-                123
-            </div>`
+            
+            template: `
+            <div>{{loginType}}
+                <template v-if="loginType === 'username'">
+                    <label>Username</label>
+                    <input placeholder="Enter your username" type="text" id="2">
+                </template>
+                <template v-else>
+                    <label>Email</label>
+                    <input placeholder="Enter your email address" type="number">
+                </template>
+                <button @click="loginType='userna3me'">++</button>
+            </div>
+                    `
         })
         new Vue({
             el: '#app',

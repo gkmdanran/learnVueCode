@@ -98,12 +98,13 @@ const componentVNodeHooks = {
   destroy (vnode: MountedComponentVNode) {
     // 获取组件实例
     const { componentInstance } = vnode
+    // 当前组件还未被销毁，就开始销毁
     if (!componentInstance._isDestroyed) {
       if (!vnode.data.keepAlive) {
-        //不被keep-alive销毁，则直接调用 $destroy 方法销毁组件
+        //不被keep-alive包裹，则直接调用 $destroy 方法销毁组件
         componentInstance.$destroy()
       } else {
-        // 负责让组件失活，不销毁组件实例，从而缓存组件的状态
+        // 被keep-alive包裹，就让组件失活，不销毁组件实例，从而缓存组件的状态
         deactivateChildComponent(componentInstance, true /* direct */)
       }
     }
