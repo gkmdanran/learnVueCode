@@ -71,8 +71,9 @@ export function renderMixin (Vue: Class<Component>) {
 
   Vue.prototype._render = function (): VNode {
     const vm: Component = this
+    //_parentVnode对应的是父组件中的子组件标签，例如<cmp name="test"/>对应的vnode。根组件上没有_parentVnode
     const { render, _parentVnode } = vm.$options
-
+    //markGKM
     if (_parentVnode) {
       vm.$scopedSlots = normalizeScopedSlots(
         _parentVnode.data.scopedSlots,
@@ -83,6 +84,7 @@ export function renderMixin (Vue: Class<Component>) {
 
     // set parent vnode. this allows render functions to have access
     // to the data on the placeholder node.
+    // _parentVnode存放到组件实例上$vnode
     vm.$vnode = _parentVnode
     // render self
     let vnode
@@ -91,7 +93,7 @@ export function renderMixin (Vue: Class<Component>) {
       // separately from one another. Nested component's render fns are called
       // when parent component is patched.
       currentRenderingInstance = vm
-      //生成vnode，主要调用$createElement
+      //调用$createElement生成vnode
       vnode = render.call(vm._renderProxy, vm.$createElement)
     } catch (e) {
       handleError(e, vm, `render`)
@@ -112,6 +114,7 @@ export function renderMixin (Vue: Class<Component>) {
       currentRenderingInstance = null
     }
     // if the returned array contains only a single node, allow it
+    // 如果vnode是一个数组且长度为1，则将vnode[0]返回。比如组件内在根节点上使用v-for，但循环的长度为1，这样也是被允许渲染的。
     if (Array.isArray(vnode) && vnode.length === 1) {
       vnode = vnode[0]
     }
@@ -127,6 +130,8 @@ export function renderMixin (Vue: Class<Component>) {
       vnode = createEmptyVNode()
     }
     // set parent
+    // 这里的vnode是组件实际内容生成的vnode，
+    // 在vnode中添加parent属性，指向的就是这个组件在父组件中，组件标签生成的vnode
     vnode.parent = _parentVnode
     //返回vnode
     return vnode
