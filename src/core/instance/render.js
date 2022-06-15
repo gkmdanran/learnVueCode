@@ -37,6 +37,7 @@ export function initRender (vm: Component) {
 
   // $attrs & $listeners are exposed for easier HOC creation.
   // they need to be reactive so that HOCs using them are always updated
+  // 获取组件标签上的属性，例如：<cmp name="test"/> name:test 就存在parentVnode.data.attrs上
   const parentData = parentVnode && parentVnode.data
 
   /* istanbul ignore else */
@@ -49,6 +50,7 @@ export function initRender (vm: Component) {
     }, true)
   } else {
     defineReactive(vm, '$attrs', parentData && parentData.attrs || emptyObject, null, true)
+    // options._parentListeners：组件标签上的事件，例如：<cmp name="test" @click="msg='2'"/> $listeners对应的就是{click:fn1}
     defineReactive(vm, '$listeners', options._parentListeners || emptyObject, null, true)
   }
 }

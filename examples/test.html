@@ -18,36 +18,28 @@
                     default:'username'
                 }
             },
-            
+            created(){
+            },
             template: `
-            <div>{{loginType}}
-                <template v-if="loginType === 'username'">
-                    <label>Username</label>
-                    <input placeholder="Enter your username" type="text" id="2">
-                </template>
-                <template v-else>
-                    <label>Email</label>
-                    <input placeholder="Enter your email address" type="number">
-                </template>
-                <button @click="loginType='userna3me'">++</button>
+            <div>23232
             </div>
                     `
         })
         new Vue({
             el: '#app',
             data: {
-                msg: 'hello vue',
+                msg: 'cmpt',
                 obj: {
                     key1: 1,
                     key2: 2
                 },
                 addVisible: true
             },
-            // template: `
-            // <span style="height:200px">3232<222{{msg}}</span>
-            // `
+           
             template: `
-                <cmpt/>
+            <div>
+                <component :is="msg" name="2323"/>
+            </div>
             `
         })
 
