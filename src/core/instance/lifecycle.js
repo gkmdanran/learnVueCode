@@ -129,7 +129,7 @@ export function lifecycleMixin (Vue: Class<Component>) {
     // call the last hook...
     vm._isDestroyed = true     //已经销毁
     // invoke destroy hooks on current rendered tree
-    vm.__patch__(vm._vnode, null)   //patch传入的vnode为null
+    vm.__patch__(vm._vnode, null)   //patch传入的vnode为null，及销毁组件
     // fire destroyed hook
     callHook(vm, 'destroyed')    //调用destroyed生命周期函数
     // turn off all instance listeners.
@@ -140,7 +140,7 @@ export function lifecycleMixin (Vue: Class<Component>) {
     }
     // release circular reference (#6759)
     if (vm.$vnode) {
-      vm.$vnode.parent = null      //markGKM
+      vm.$vnode.parent = null      //取消子组件指向父组件的引用
     }
   }
 }

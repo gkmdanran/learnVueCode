@@ -18,7 +18,7 @@ export function initInjections (vm: Component) {
   const result = resolveInject(vm.$options.inject, vm)
   //result是inject中每一个key及对应的value
   if (result) {
-    toggleObserving(false)   //markGKM
+    toggleObserving(false)   
     Object.keys(result).forEach(key => {
       /* istanbul ignore else */
       if (process.env.NODE_ENV !== 'production') {

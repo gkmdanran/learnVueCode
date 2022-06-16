@@ -943,7 +943,7 @@ function processAttrs (el) {
       //modifiers={lazy:true}
       modifiers = parseModifiers(name.replace(dirRE, ''))
       // support .foo shorthand syntax for the .prop modifier
-      if (process.env.VBIND_PROP_SHORTHAND && propBindRE.test(name)) { //markGKM
+      if (process.env.VBIND_PROP_SHORTHAND && propBindRE.test(name)) {
         (modifiers || (modifiers = {})).prop = true
         name = `.` + name.slice(1).replace(modifierRE, '')
       } else if (modifiers) {

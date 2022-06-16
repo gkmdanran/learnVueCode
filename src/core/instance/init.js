@@ -58,7 +58,7 @@ export function initMixin (Vue: Class<Component>) {
     vm._self = vm
     initLifecycle(vm)//初始化$parent、$root、$children、$refs
     initEvents(vm)   //初始化事件vm._events={},如果是组件：更新组件的事件updateComponentListeners
-    initRender(vm)   //markGKM
+    initRender(vm)   //createElement
     callHook(vm, 'beforeCreate')  //调用beforeCreate生命周期函数
     initInjections(vm) // 处理inject
     initState(vm)//初始化props、methods、data、computed、watch
