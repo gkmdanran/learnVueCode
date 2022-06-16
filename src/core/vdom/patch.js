@@ -239,6 +239,8 @@ export function createPatchFunction (backend) {
   function createComponent (vnode, insertedVnodeQueue, parentElm, refElm) {
     let i = vnode.data
     if (isDef(i)) {
+      // 第一次渲染的时候，vnode.componentInstance 为 undefined，被keepalive包裹的组件vnode.data.keepAlive 为 true
+      // 父组件 <keep-alive> 的 render 函数会先执行，那么该 vnode 缓存到内存中，并且设置 vnode.data.keepAlive 为 true
       const isReactivated = isDef(vnode.componentInstance) && i.keepAlive
       // 如果vnode是组件，则data存在hook，执行init钩子函数，init会中如果组件被keep-alive包裹则会执行prepatch钩子。创建组件实例，执行_init方法然后再$mount挂载
       if (isDef(i = i.hook) && isDef(i = i.init)) {
@@ -300,6 +302,7 @@ export function createPatchFunction (backend) {
     }
     // unlike a newly created component,
     // a reactivated keep-alive component doesn't insert itself
+    //把缓存的 DOM 对象直接插入到目标元素中
     insert(parentElm, vnode.elm, refElm)
   }
   /**
@@ -627,7 +630,7 @@ export function createPatchFunction (backend) {
 
     let i
     const data = vnode.data
-    // 执行组件的 prepatch 钩子
+    // 在diff前执行组件的 prepatch 钩子
     if (isDef(data) && isDef(i = data.hook) && isDef(i = i.prepatch)) {
       i(oldVnode, vnode)
     }

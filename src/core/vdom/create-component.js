@@ -64,6 +64,7 @@ const componentVNodeHooks = {
     // 老 VNode 的组件实例
     const child = vnode.componentInstance = oldVnode.componentInstance
      // 用 新vnode 上的属性更新 child 上的各种属性
+     // keepalive包裹时：重新执行 <keep-alive> 的 render 方法，这个时候如果它包裹的第一个组件 vnode 命中缓存，则直接返回缓存中的 vnode.componentInstance
     updateChildComponent(
       child,
       options.propsData, // updated props
